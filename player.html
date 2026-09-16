@@ -9,12 +9,20 @@
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #282c34; color: white; margin: 0; padding: 20px; }
     .card { background: #3b4049; max-width: 400px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     input { width: 85%; padding: 12px; margin-bottom: 12px; border-radius: 6px; border: none; font-size: 16px; text-align: center; }
+    .section-field { display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; margin-bottom: 12px; }
+    .section-field input { width: 140px; margin: 0 0 0 8px; padding: 8px; border-bottom: 2px solid #61dafb; border-radius: 0; background: transparent; color: white; font-weight: bold; }
     .btn { background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.2s ease; }
     .btn.selected { background: #007bff !important; color: white !important; transform: scale(1.02); box-shadow: 0 0 10px rgba(0,123,255,0.5); }
     .btn:disabled { background: #666; cursor: not-allowed; transform: none; box-shadow: none; }
     .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
     .clincher-bar { background: #6f42c1; color: white; }
-    .timer-badge { font-size: 22px; font-weight: bold; color: #ff6b6b; margin-bottom: 10px; }
+    
+    /* Timer & Shrinking Progress Bar */
+    .timer-container { margin: 10px 0 15px 0; }
+    .timer-badge { font-size: 22px; font-weight: bold; color: #ff6b6b; margin-bottom: 6px; }
+    .progress-bar-bg { background: #20232a; height: 12px; border-radius: 10px; overflow: hidden; width: 100%; }
+    .progress-bar-fill { background: #28a745; height: 100%; width: 100%; transition: width 1s linear, background-color 0.5s ease; }
+    
     .result-correct { background: #28a745; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
     .result-wrong { background: #dc3545; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
     #qText { font-size: 20px; margin: 15px 0; color: #fff; line-height: 1.4; }
@@ -43,6 +51,12 @@
   <div class="card" id="joinScreen">
     <h2>Join Quiz Bee</h2>
     <input type="text" id="roomInput" placeholder="Enter Room Code (e.g. QUIZ1234)" />
+    
+    <div class="section-field">
+      <span>GRADE 11 Section</span>
+      <input type="text" id="sectionInput" placeholder="________" />
+    </div>
+
     <input type="text" id="username" placeholder="Enter Your Name" />
     <button class="btn" style="text-align: center;" onclick="joinGame()">Join Room</button>
   </div>
@@ -56,7 +70,14 @@
   <!-- QUESTION SCREEN -->
   <div class="card" id="questionScreen" style="display:none;">
     <div class="info-bar" id="roundInfo">Round 1</div>
-    <div class="timer-badge">⏱️ Time Left: <span id="playerTimer">20</span>s</div>
+    
+    <div class="timer-container">
+      <div class="timer-badge">⏱️ Time Left: <span id="playerTimer">20</span>s</div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="playerTimerBar"></div>
+      </div>
+    </div>
+
     <div class="times-up-banner" id="playerTimesUp">🚨 TIME'S UP! 🚨</div>
     <h3 id="qText">Waiting for question...</h3>
     <div id="optionsContainer"></div>
@@ -81,16 +102,21 @@
     let peer = null;
     let conn = null;
     let playerName = '';
+    let playerSection = '';
+    let fullPlayerIdentifier = '';
     let roomCode = '';
     let isTimeUp = false;
 
     function joinGame() {
       roomCode = document.getElementById('roomInput').value.trim().toUpperCase();
       playerName = document.getElementById('username').value.trim();
+      playerSection = document.getElementById('sectionInput').value.trim();
 
       if (!roomCode || !playerName) {
-        return alert('Please enter both Room Code and Name!');
+        return alert('Please enter both Room Code and your Name!');
       }
+
+      fullPlayerIdentifier = playerSection ? `${playerName} (${playerSection})` : playerName;
 
       connectToHost();
     }
@@ -103,7 +129,7 @@
         conn = peer.connect(roomCode);
 
         conn.on('open', () => {
-          conn.send({ type: 'join', name: playerName });
+          conn.send({ type: 'join', name: playerName, section: playerSection });
           document.getElementById('joinScreen').style.display = 'none';
           document.getElementById('waitingScreen').style.display = 'block';
           document.getElementById('waitingStatus').innerText = "Connected! 🚀";
@@ -118,10 +144,10 @@
             document.getElementById('questionScreen').style.display = 'block';
             showQuestion(data);
           } else if (data.type === 'tick') {
-            document.getElementById('playerTimer').innerText = data.time;
+            updatePlayerTimerUI(data.time);
           } else if (data.type === 'timeOut') {
             isTimeUp = true;
-            document.getElementById('playerTimer').innerText = '0';
+            updatePlayerTimerUI(0);
             document.getElementById('playerTimesUp').style.display = 'block';
             disableOptions();
           } else if (data.type === 'scoreboard') {
@@ -138,14 +164,14 @@
               feedbackDiv.innerHTML = `❌ INCORRECT<br><small style="font-size: 14px; font-weight: normal;">Correct Answer: ${data.correctAnswerText}</small>`;
             }
 
-            const me = data.leaderboard.find(p => p.name === playerName);
+            const me = data.leaderboard.find(p => p.name === fullPlayerIdentifier);
             if (me) {
               document.getElementById('myScoreText').innerText = `Your Total Score: ${me.score} pts`;
             }
 
             document.getElementById('playerLeaderboardView').innerHTML = data.leaderboard.map((p, index) => {
               const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-              const isMe = p.name === playerName ? 'style="border: 2px solid #61dafb;"' : '';
+              const isMe = p.name === fullPlayerIdentifier ? 'style="border: 2px solid #61dafb;"' : '';
               return `<li ${isMe}><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
             }).join('');
           } else if (data.type === 'end') {
@@ -168,6 +194,21 @@
       });
     }
 
+    function updatePlayerTimerUI(seconds) {
+      document.getElementById('playerTimer').innerText = seconds;
+      const bar = document.getElementById('playerTimerBar');
+      const percentage = (seconds / 20) * 100;
+      bar.style.width = percentage + "%";
+
+      if (seconds <= 5) {
+        bar.style.backgroundColor = "#dc3545";
+      } else if (seconds <= 10) {
+        bar.style.backgroundColor = "#fd7e14";
+      } else {
+        bar.style.backgroundColor = "#28a745";
+      }
+    }
+
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible" && playerName && roomCode) {
         if (!conn || !conn.open) {
@@ -177,7 +218,7 @@
     });
 
     function showQuestion(data) {
-      document.getElementById('playerTimer').innerText = '20';
+      updatePlayerTimerUI(20);
       const infoBar = document.getElementById('roundInfo');
       infoBar.innerText = `${data.round.toUpperCase()} • ${data.points} PT${data.points > 1 ? 'S' : ''}`;
       infoBar.className = data.round.includes("Clincher") ? "info-bar clincher-bar" : "info-bar";
