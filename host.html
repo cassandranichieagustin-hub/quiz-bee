@@ -25,6 +25,21 @@
     .alert-banner { background: #fff3cd; color: #856404; padding: 12px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; }
     .room-code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #007bff; background: #e7f1ff; padding: 8px 20px; border-radius: 8px; display: inline-block; margin: 10px 0; }
     .timer-box { font-size: 36px; font-weight: bold; color: #dc3545; background: #ffe6e6; border: 2px solid #dc3545; padding: 8px 20px; border-radius: 30px; display: inline-block; margin: 10px 0; }
+    
+    /* Pulsating Time's Up Banner */
+    .times-up-banner {
+      display: none;
+      font-size: 28px;
+      font-weight: 900;
+      color: #ff2a2a;
+      letter-spacing: 3px;
+      margin: 10px 0;
+      animation: pulse 0.8s infinite alternate;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.8; text-shadow: 0 0 5px rgba(255, 42, 42, 0.4); }
+      100% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 20px rgba(255, 42, 42, 0.9); }
+    }
   </style>
 </head>
 <body>
@@ -51,6 +66,7 @@
   <div class="card" id="questionArea" style="display:none;">
     <div><span class="badge" id="roundBadge">Round</span></div>
     <div class="timer-box">⏱️ <span id="timerDisplay">20</span>s</div>
+    <div class="times-up-banner" id="hostTimesUp">🚨 TIME'S UP! 🚨</div>
     <h3 id="qNumber" style="margin: 5px 0; color: #666;">Question 1</h3>
     <h1 id="qText" style="margin: 15px 0;">Question goes here...</h1>
     
@@ -118,7 +134,6 @@
           players[conn.peer] = { name: data.name, score: players[conn.peer] ? players[conn.peer].score : 0 };
           updatePlayerLists();
 
-          // Sync state immediately for reconnecting players
           if (stepState === 'question' && currentQuestion >= 0) {
             const q = questions[currentQuestion];
             conn.send({
@@ -159,6 +174,7 @@
       clearInterval(timerInterval);
       timeLeft = 20;
       document.getElementById('timerDisplay').innerText = timeLeft;
+      document.getElementById('hostTimesUp').style.display = 'none';
 
       timerInterval = setInterval(() => {
         timeLeft--;
@@ -167,6 +183,7 @@
 
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
+          document.getElementById('hostTimesUp').style.display = 'block';
           broadcast({ type: 'timeOut' });
         }
       }, 1000);
@@ -219,6 +236,7 @@
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('scoreboardArea').style.display = 'none';
       document.getElementById('questionArea').style.display = 'block';
+      document.getElementById('hostTimesUp').style.display = 'none';
 
       const q = questions[currentQuestion];
       const letters = ['A', 'B', 'C', 'D'];
