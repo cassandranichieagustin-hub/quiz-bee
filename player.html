@@ -17,6 +17,7 @@
     .timer-badge { font-size: 22px; font-weight: bold; color: #ff6b6b; margin-bottom: 10px; }
     .result-correct { background: #28a745; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
     .result-wrong { background: #dc3545; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
+    #qText { font-size: 20px; margin: 15px 0; color: #fff; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -31,15 +32,15 @@
 
   <!-- WAITING SCREEN -->
   <div class="card" id="waitingScreen" style="display:none;">
-    <h2>Connected! 🚀</h2>
-    <p>Look at the main host screen for questions.</p>
+    <h2 id="waitingStatus">Connected! 🚀</h2>
+    <p>Waiting for host to start...</p>
   </div>
 
   <!-- QUESTION SCREEN -->
   <div class="card" id="questionScreen" style="display:none;">
     <div class="info-bar" id="roundInfo">Round 1</div>
     <div class="timer-badge">⏱️ Time Left: <span id="playerTimer">20</span>s</div>
-    <h3 id="qText">Waiting...</h3>
+    <h3 id="qText">Waiting for question...</h3>
     <div id="optionsContainer"></div>
   </div>
 
@@ -47,7 +48,7 @@
   <div class="card" id="scoreScreen" style="display:none;">
     <div id="answerFeedback"></div>
     <h3 id="myScoreText" style="color: #61dafb; font-size: 24px;">Your Score: 0 pts</h3>
-    <p>Check the host screen for full rankings.</p>
+    <p>Check host screen for overall standings.</p>
   </div>
 
   <script>
@@ -60,16 +61,23 @@
     let peer = null;
     let conn = null;
     let playerName = '';
+    let roomCode = '';
     let isTimeUp = false;
+    let selectedOption = null;
 
     function joinGame() {
-      const roomCode = document.getElementById('roomInput').value.trim().toUpperCase();
+      roomCode = document.getElementById('roomInput').value.trim().toUpperCase();
       playerName = document.getElementById('username').value.trim();
 
       if (!roomCode || !playerName) {
-        return alert('Please enter both the Room Code and your Name!');
+        return alert('Please enter both Room Code and Name!');
       }
 
+      connectToHost();
+    }
+
+    function connectToHost() {
+      if (peer) peer.destroy();
       peer = new Peer();
 
       peer.on('open', () => {
@@ -79,6 +87,7 @@
           conn.send({ type: 'join', name: playerName });
           document.getElementById('joinScreen').style.display = 'none';
           document.getElementById('waitingScreen').style.display = 'block';
+          document.getElementById('waitingStatus').innerText = "Connected! 🚀";
         });
 
         conn.on('data', (data) => {
@@ -120,13 +129,29 @@
           }
         });
 
-        conn.on('error', (err) => {
-          alert("Could not connect to Room Code. Check the host screen!");
+        conn.on('close', () => {
+          document.getElementById('waitingStatus').innerText = "Reconnecting...";
+          setTimeout(connectToHost, 2000);
+        });
+
+        conn.on('error', () => {
+          document.getElementById('waitingStatus').innerText = "Connection Error. Retrying...";
+          setTimeout(connectToHost, 2000);
         });
       });
     }
 
+    // Auto reconnect when coming back to screen/app tab
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && playerName && roomCode) {
+        if (!conn || !conn.open) {
+          connectToHost();
+        }
+      }
+    });
+
     function showQuestion(data) {
+      selectedOption = null;
       document.getElementById('playerTimer').innerText = '20';
       const infoBar = document.getElementById('roundInfo');
       infoBar.innerText = `${data.round.toUpperCase()} • ${data.points} PT${data.points > 1 ? 'S' : ''}`;
@@ -146,13 +171,10 @@
         btn.onclick = () => {
           if (isTimeUp) return;
 
-          // Clear selected state from all buttons
           document.querySelectorAll('#optionsContainer .btn').forEach(b => b.classList.remove('selected'));
-
-          // Highlight current choice
           btn.classList.add('selected');
 
-          // Send updated answer choice to host
+          selectedOption = idx;
           conn.send({ type: 'answer', option: idx });
         };
         container.appendChild(btn);
