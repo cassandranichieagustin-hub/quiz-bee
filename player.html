@@ -19,7 +19,6 @@
     .result-wrong { background: #dc3545; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
     #qText { font-size: 20px; margin: 15px 0; color: #fff; line-height: 1.4; }
     
-    /* Pulsating Time's Up Banner for Mobile */
     .times-up-banner {
       display: none;
       font-size: 26px;
@@ -34,7 +33,6 @@
       100% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 18px rgba(255, 77, 77, 0.9); }
     }
 
-    /* Leaderboard Styling for Mobile Screen */
     .leaderboard-list { list-style: none; padding: 0; margin-top: 15px; text-align: left; }
     .leaderboard-list li { background: #20232a; margin: 6px 0; padding: 10px 14px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; }
   </style>
@@ -145,7 +143,6 @@
               document.getElementById('myScoreText').innerText = `Your Total Score: ${me.score} pts`;
             }
 
-            // Render overall leaderboard list on player device
             document.getElementById('playerLeaderboardView').innerHTML = data.leaderboard.map((p, index) => {
               const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
               const isMe = p.name === playerName ? 'style="border: 2px solid #61dafb;"' : '';
