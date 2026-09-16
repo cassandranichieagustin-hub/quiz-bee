@@ -112,10 +112,24 @@
 
     peer.on('connection', (conn) => {
       connections.push(conn);
+
       conn.on('data', (data) => {
         if (data.type === 'join') {
-          players[conn.peer] = { name: data.name, score: 0 };
+          players[conn.peer] = { name: data.name, score: players[conn.peer] ? players[conn.peer].score : 0 };
           updatePlayerLists();
+
+          // Sync state immediately for reconnecting players
+          if (stepState === 'question' && currentQuestion >= 0) {
+            const q = questions[currentQuestion];
+            conn.send({
+              type: 'question',
+              question: q.question,
+              options: q.options,
+              points: q.points,
+              round: q.round
+            });
+            conn.send({ type: 'tick', time: timeLeft });
+          }
         } else if (data.type === 'answer') {
           playerAnswers[conn.peer] = data.option;
           const q = questions[currentQuestion];
@@ -124,6 +138,7 @@
           }
         }
       });
+
       conn.on('close', () => {
         delete players[conn.peer];
         updatePlayerLists();
