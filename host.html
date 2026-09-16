@@ -32,7 +32,7 @@
   <!-- LOBBY SCREEN -->
   <div class="card" id="lobby">
     <h1>🏆 Quiz Bee Host</h1>
-    <p>Scan the QR Code with your iPad to join:</p>
+    <p>Scan the QR Code using the provided device to join:</p>
     
     <div id="qrContainer">
       <p><i>Generating QR Code...</i></p>
@@ -96,7 +96,7 @@
     let currentQuestion = -1;
     let stepState = 'lobby'; 
     let players = {}; 
-    let playerAnswers = {}; // peerId: chosenOptionIndex
+    let playerAnswers = {};
     let connections = [];
     let inClincherMode = false;
     let timerInterval = null;
@@ -200,7 +200,7 @@
     }
 
     function showQuestion() {
-      playerAnswers = {}; // Reset answers for the new round
+      playerAnswers = {}; 
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('scoreboardArea').style.display = 'none';
       document.getElementById('questionArea').style.display = 'block';
@@ -248,7 +248,6 @@
 
       const currentQ = questions[currentQuestion];
 
-      // Send result feedback to individual players
       connections.forEach(conn => {
         const playerChoice = playerAnswers[conn.peer];
         const isCorrect = (playerChoice === currentQ.answer);
