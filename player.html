@@ -17,7 +17,6 @@
     .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
     .clincher-bar { background: #6f42c1; color: white; }
     
-    /* Timer & Shrinking Progress Bar */
     .timer-container { margin: 10px 0 15px 0; }
     .timer-badge { font-size: 22px; font-weight: bold; color: #ff6b6b; margin-bottom: 6px; }
     .progress-bar-bg { background: #20232a; height: 12px; border-radius: 10px; overflow: hidden; width: 100%; }
@@ -43,6 +42,12 @@
 
     .leaderboard-list { list-style: none; padding: 0; margin-top: 15px; text-align: left; }
     .leaderboard-list li { background: #20232a; margin: 6px 0; padding: 10px 14px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; }
+
+    /* Placement Banners */
+    .place-1st { background: linear-gradient(135deg, #ffe259, #ffa751); color: #333; padding: 18px; border-radius: 10px; font-size: 22px; font-weight: 900; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5); }
+    .place-2nd { background: linear-gradient(135deg, #e0e0e0, #f5f5f5); color: #333; padding: 16px; border-radius: 10px; font-size: 20px; font-weight: 900; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(192, 192, 192, 0.5); }
+    .place-3rd { background: linear-gradient(135deg, #e5a65d, #c5793e); color: white; padding: 16px; border-radius: 10px; font-size: 20px; font-weight: 900; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(205, 127, 50, 0.5); }
+    .place-other { background: #20232a; color: #61dafb; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
   </style>
 </head>
 <body>
@@ -90,6 +95,14 @@
     
     <h4 style="margin: 15px 0 5px 0; text-align: left; color: #aaa;">📊 Current Leaderboard</h4>
     <ul class="leaderboard-list" id="playerLeaderboardView"></ul>
+  </div>
+
+  <!-- END GAME / PODIUM SCREEN -->
+  <div class="card" id="endScreen" style="display:none;">
+    <div id="placementBanner"></div>
+    <h3 id="finalScoreText" style="color: #61dafb; font-size: 24px;">Final Score: 0 pts</h3>
+    <h4 style="margin: 15px 0 5px 0; text-align: left; color: #aaa;">🏆 Final Standings</h4>
+    <ul class="leaderboard-list" id="finalLeaderboardView"></ul>
   </div>
 
   <script>
@@ -141,6 +154,7 @@
             document.getElementById('playerTimesUp').style.display = 'none';
             document.getElementById('waitingScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'none';
             document.getElementById('questionScreen').style.display = 'block';
             showQuestion(data);
           } else if (data.type === 'tick') {
@@ -153,6 +167,7 @@
           } else if (data.type === 'scoreboard') {
             isTimeUp = true;
             document.getElementById('questionScreen').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'block';
             
             const feedbackDiv = document.getElementById('answerFeedback');
@@ -177,8 +192,10 @@
           } else if (data.type === 'end') {
             document.getElementById('questionScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'none';
-            document.getElementById('waitingScreen').style.display = 'block';
-            document.getElementById('waitingScreen').innerHTML = `<h2>Quiz Ended!</h2><h3>Winner: ${data.winner}</h3>`;
+            document.getElementById('waitingScreen').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'block';
+
+            showFinalPlacement(data.leaderboard);
           }
         });
 
@@ -192,6 +209,40 @@
           setTimeout(connectToHost, 2000);
         });
       });
+    }
+
+    function showFinalPlacement(leaderboard) {
+      const myRankIndex = leaderboard.findIndex(p => p.name === fullPlayerIdentifier);
+      const myScore = leaderboard[myRankIndex] ? leaderboard[myRankIndex].score : 0;
+      const banner = document.getElementById('placementBanner');
+
+      document.getElementById('finalScoreText').innerText = `Final Score: ${myScore} pts`;
+
+      if (myRankIndex === 0) {
+        banner.className = 'place-1st';
+        banner.innerHTML = '🥇 CONGRATULATIONS!<br>YOU PLACED 1ST PLACE! 🏆';
+      } else if (myRankIndex === 1) {
+        banner.className = 'place-2nd';
+        banner.innerHTML = '🥈 CONGRATULATIONS!<br>YOU PLACED 2ND PLACE! 🎉';
+      } else if (myRankIndex === 2) {
+        banner.className = 'place-3rd';
+        banner.innerHTML = '🥉 CONGRATULATIONS!<br>YOU PLACED 3RD PLACE! 🎉';
+      } else {
+        banner.className = 'place-other';
+        banner.innerHTML = `👏 Great Effort!<br>You finished ${myRankIndex + 1}${getOrdinal(myRankIndex + 1)} Place. Thank you for participating!`;
+      }
+
+      document.getElementById('finalLeaderboardView').innerHTML = leaderboard.map((p, index) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+        const isMe = p.name === fullPlayerIdentifier ? 'style="border: 2px solid #61dafb;"' : '';
+        return `<li ${isMe}><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
+      }).join('');
+    }
+
+    function getOrdinal(n) {
+      const s = ["th", "st", "nd", "rd"];
+      const v = n % 100;
+      return s[(v - 20) % 10] || s[v] || s[0];
     }
 
     function updatePlayerTimerUI(seconds) {
