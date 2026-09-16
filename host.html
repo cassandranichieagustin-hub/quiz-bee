@@ -94,6 +94,15 @@
     ];
 
     let currentQuestion = -1; peer.on('open', (id) => {
+  const joinUrl = `https://cassandranichieagustin-hub.github.io/quiz-bee/player.html?room=${id}`;
+  
+  document.getElementById("qrcode").innerHTML = "";
+  new QRCode(document.getElementById("qrcode"), {
+    text: joinUrl,
+    width: 200,
+    height: 200
+  });
+}); 
   // Update this to your live public website link:
   const joinUrl = `https://your-site-name.netlify.app/player.html?room=${id}`;
   
