@@ -24,7 +24,12 @@
     .option-item { font-size: 18px; margin: 8px 0; font-weight: bold; color: #333; }
     .alert-banner { background: #fff3cd; color: #856404; padding: 12px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; }
     .room-code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #007bff; background: #e7f1ff; padding: 8px 20px; border-radius: 8px; display: inline-block; margin: 10px 0; }
-    .timer-box { font-size: 36px; font-weight: bold; color: #dc3545; background: #ffe6e6; border: 2px solid #dc3545; padding: 8px 20px; border-radius: 30px; display: inline-block; margin: 10px 0; }
+    
+    /* Timer & Progress Bar */
+    .timer-container { margin: 15px 0; }
+    .timer-box { font-size: 32px; font-weight: bold; color: #dc3545; margin-bottom: 8px; }
+    .progress-bar-bg { background: #e9ecef; height: 16px; border-radius: 10px; overflow: hidden; width: 100%; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); }
+    .progress-bar-fill { background: #28a745; height: 100%; width: 100%; transition: width 1s linear, background-color 0.5s ease; }
     
     .times-up-banner {
       display: none;
@@ -64,7 +69,14 @@
   <!-- QUESTION SCREEN -->
   <div class="card" id="questionArea" style="display:none;">
     <div><span class="badge" id="roundBadge">Round</span></div>
-    <div class="timer-box">⏱️ <span id="timerDisplay">20</span>s</div>
+    
+    <div class="timer-container">
+      <div class="timer-box">⏱️ <span id="timerDisplay">20</span>s</div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="hostTimerBar"></div>
+      </div>
+    </div>
+
     <div class="times-up-banner" id="hostTimesUp">🚨 TIME'S UP! 🚨</div>
     <h3 id="qNumber" style="margin: 5px 0; color: #666;">Question 1</h3>
     <h1 id="qText" style="margin: 15px 0;">Question goes here...</h1>
@@ -111,7 +123,7 @@
     let currentQuestion = -1;
     let stepState = 'lobby'; 
     let players = {}; 
-    let playerAnswers = {}; // Store chosen option index: { peerId: optionIndex }
+    let playerAnswers = {};
     let connections = [];
     let inClincherMode = false;
     let timerInterval = null;
@@ -130,10 +142,11 @@
 
       conn.on('data', (data) => {
         if (data.type === 'join') {
+          const formattedName = data.section ? `${data.name} (${data.section})` : data.name;
           if (!players[conn.peer]) {
-            players[conn.peer] = { name: data.name, score: 0 };
+            players[conn.peer] = { name: formattedName, score: 0 };
           } else {
-            players[conn.peer].name = data.name;
+            players[conn.peer].name = formattedName;
           }
           updatePlayerLists();
 
@@ -149,7 +162,6 @@
             conn.send({ type: 'tick', time: timeLeft });
           }
         } else if (data.type === 'answer') {
-          // Simply record active selection without adding points immediately
           playerAnswers[conn.peer] = data.option;
         }
       });
@@ -173,12 +185,12 @@
     function startTimer() {
       clearInterval(timerInterval);
       timeLeft = 20;
-      document.getElementById('timerDisplay').innerText = timeLeft;
+      updateTimerUI(timeLeft);
       document.getElementById('hostTimesUp').style.display = 'none';
 
       timerInterval = setInterval(() => {
         timeLeft--;
-        document.getElementById('timerDisplay').innerText = timeLeft;
+        updateTimerUI(timeLeft);
         broadcast({ type: 'tick', time: timeLeft });
 
         if (timeLeft <= 0) {
@@ -187,6 +199,21 @@
           broadcast({ type: 'timeOut' });
         }
       }, 1000);
+    }
+
+    function updateTimerUI(seconds) {
+      document.getElementById('timerDisplay').innerText = seconds;
+      const bar = document.getElementById('hostTimerBar');
+      const percentage = (seconds / 20) * 100;
+      bar.style.width = percentage + "%";
+
+      if (seconds <= 5) {
+        bar.style.backgroundColor = "#dc3545"; // Red
+      } else if (seconds <= 10) {
+        bar.style.backgroundColor = "#fd7e14"; // Orange
+      } else {
+        bar.style.backgroundColor = "#28a745"; // Green
+      }
     }
 
     function checkTieForFirst() {
@@ -221,7 +248,6 @@
         }
 
       } else if (stepState === 'question') {
-        // Evaluate scores cleanly ONCE when moving from question -> scoreboard
         calculateScoresForCurrentQuestion();
 
         if (currentQuestion === 2 || currentQuestion === 5 || currentQuestion === 8) {
@@ -234,18 +260,17 @@
       }
     }
 
-    // SCORE CALCULATION (RUNS ONLY ONCE PER QUESTION)
     function calculateScoresForCurrentQuestion() {
       const q = questions[currentQuestion];
       Object.keys(playerAnswers).forEach(peerId => {
         if (playerAnswers[peerId] === q.answer && players[peerId]) {
-          players[peerId].score += q.points; // Adds exact round points (1, 3, 5, or 10)
+          players[peerId].score += q.points;
         }
       });
     }
 
     function showQuestion() {
-      playerAnswers = {}; // Reset answer registry for the new question
+      playerAnswers = {}; 
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('scoreboardArea').style.display = 'none';
       document.getElementById('questionArea').style.display = 'block';
