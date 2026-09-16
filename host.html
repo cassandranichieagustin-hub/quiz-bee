@@ -26,7 +26,6 @@
     .room-code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #007bff; background: #e7f1ff; padding: 8px 20px; border-radius: 8px; display: inline-block; margin: 10px 0; }
     .timer-box { font-size: 36px; font-weight: bold; color: #dc3545; background: #ffe6e6; border: 2px solid #dc3545; padding: 8px 20px; border-radius: 30px; display: inline-block; margin: 10px 0; }
     
-    /* Pulsating Time's Up Banner */
     .times-up-banner {
       display: none;
       font-size: 28px;
@@ -112,7 +111,7 @@
     let currentQuestion = -1;
     let stepState = 'lobby'; 
     let players = {}; 
-    let playerAnswers = {};
+    let playerAnswers = {}; // Store chosen option index: { peerId: optionIndex }
     let connections = [];
     let inClincherMode = false;
     let timerInterval = null;
@@ -131,7 +130,11 @@
 
       conn.on('data', (data) => {
         if (data.type === 'join') {
-          players[conn.peer] = { name: data.name, score: players[conn.peer] ? players[conn.peer].score : 0 };
+          if (!players[conn.peer]) {
+            players[conn.peer] = { name: data.name, score: 0 };
+          } else {
+            players[conn.peer].name = data.name;
+          }
           updatePlayerLists();
 
           if (stepState === 'question' && currentQuestion >= 0) {
@@ -146,11 +149,8 @@
             conn.send({ type: 'tick', time: timeLeft });
           }
         } else if (data.type === 'answer') {
+          // Simply record active selection without adding points immediately
           playerAnswers[conn.peer] = data.option;
-          const q = questions[currentQuestion];
-          if (data.option === q.answer) {
-            players[conn.peer].score += q.points;
-          }
         }
       });
 
@@ -221,6 +221,9 @@
         }
 
       } else if (stepState === 'question') {
+        // Evaluate scores cleanly ONCE when moving from question -> scoreboard
+        calculateScoresForCurrentQuestion();
+
         if (currentQuestion === 2 || currentQuestion === 5 || currentQuestion === 8) {
           stepState = 'roundDivider';
           showRoundSummary();
@@ -231,8 +234,18 @@
       }
     }
 
+    // SCORE CALCULATION (RUNS ONLY ONCE PER QUESTION)
+    function calculateScoresForCurrentQuestion() {
+      const q = questions[currentQuestion];
+      Object.keys(playerAnswers).forEach(peerId => {
+        if (playerAnswers[peerId] === q.answer && players[peerId]) {
+          players[peerId].score += q.points; // Adds exact round points (1, 3, 5, or 10)
+        }
+      });
+    }
+
     function showQuestion() {
-      playerAnswers = {}; 
+      playerAnswers = {}; // Reset answer registry for the new question
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('scoreboardArea').style.display = 'none';
       document.getElementById('questionArea').style.display = 'block';
