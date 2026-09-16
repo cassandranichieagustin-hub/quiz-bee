@@ -14,6 +14,7 @@
     .btn { background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.2s ease; }
     .btn.selected { background: #007bff !important; color: white !important; transform: scale(1.02); box-shadow: 0 0 10px rgba(0,123,255,0.5); }
     .btn:disabled { background: #666; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-secondary { background: #6c757d; color: white; width: auto; padding: 8px 16px; font-size: 14px; margin-top: 10px; display: inline-block; }
     .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
     .clincher-bar { background: #6f42c1; color: white; }
     
@@ -43,7 +44,6 @@
     .leaderboard-list { list-style: none; padding: 0; margin-top: 15px; text-align: left; }
     .leaderboard-list li { background: #20232a; margin: 6px 0; padding: 10px 14px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; }
 
-    /* Placement Banners */
     .place-1st { background: linear-gradient(135deg, #ffe259, #ffa751); color: #333; padding: 18px; border-radius: 10px; font-size: 22px; font-weight: 900; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5); }
     .place-2nd { background: linear-gradient(135deg, #e0e0e0, #f5f5f5); color: #333; padding: 16px; border-radius: 10px; font-size: 20px; font-weight: 900; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(192, 192, 192, 0.5); }
     .place-3rd { background: linear-gradient(135deg, #e5a65d, #c5793e); color: white; padding: 16px; border-radius: 10px; font-size: 20px; font-weight: 900; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(205, 127, 50, 0.5); }
@@ -70,6 +70,7 @@
   <div class="card" id="waitingScreen" style="display:none;">
     <h2 id="waitingStatus">Connected! 🚀</h2>
     <p>Waiting for host to start...</p>
+    <button class="btn btn-secondary" onclick="resetIdentity()">Change Name / Room</button>
   </div>
 
   <!-- QUESTION SCREEN -->
@@ -103,15 +104,13 @@
     <h3 id="finalScoreText" style="color: #61dafb; font-size: 24px;">Final Score: 0 pts</h3>
     <h4 style="margin: 15px 0 5px 0; text-align: left; color: #aaa;">🏆 Final Standings</h4>
     <ul class="leaderboard-list" id="finalLeaderboardView"></ul>
+    <button class="btn btn-secondary" onclick="resetIdentity()">Leave Room</button>
   </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const roomFromUrl = urlParams.get('room') || urlParams.get('host');
-    if (roomFromUrl) {
-      document.getElementById('roomInput').value = roomFromUrl;
-    }
-
+    
     let peer = null;
     let conn = null;
     let playerName = '';
@@ -119,6 +118,30 @@
     let fullPlayerIdentifier = '';
     let roomCode = '';
     let isTimeUp = false;
+
+    // Load saved identity if user reopens or refreshes the page
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedRoom = roomFromUrl || localStorage.getItem('qb_room');
+      const savedName = localStorage.getItem('qb_name');
+      const savedSection = localStorage.getItem('qb_section') || '';
+
+      if (savedRoom) {
+        document.getElementById('roomInput').value = savedRoom;
+      }
+
+      if (savedRoom && savedName) {
+        roomCode = savedRoom.toUpperCase();
+        playerName = savedName;
+        playerSection = savedSection;
+        fullPlayerIdentifier = playerSection ? `${playerName} (${playerSection})` : playerName;
+
+        // Auto-reconnect without presenting the login form
+        document.getElementById('joinScreen').style.display = 'none';
+        document.getElementById('waitingScreen').style.display = 'block';
+        document.getElementById('waitingStatus').innerText = "Restoring Connection... 🔄";
+        connectToHost();
+      }
+    });
 
     function joinGame() {
       roomCode = document.getElementById('roomInput').value.trim().toUpperCase();
@@ -129,9 +152,21 @@
         return alert('Please enter both Room Code and your Name!');
       }
 
-      fullPlayerIdentifier = playerSection ? `${playerName} (${playerSection})` : playerName;
+      // Save user details to localStorage
+      localStorage.setItem('qb_room', roomCode);
+      localStorage.setItem('qb_name', playerName);
+      localStorage.setItem('qb_section', playerSection);
 
+      fullPlayerIdentifier = playerSection ? `${playerName} (${playerSection})` : playerName;
       connectToHost();
+    }
+
+    function resetIdentity() {
+      localStorage.removeItem('qb_room');
+      localStorage.removeItem('qb_name');
+      localStorage.removeItem('qb_section');
+      if (peer) peer.destroy();
+      location.reload();
     }
 
     function connectToHost() {
@@ -150,12 +185,11 @@
 
         conn.on('data', (data) => {
           if (data.type === 'question') {
-            isTimeUp = false;
-            document.getElementById('playerTimesUp').style.display = 'none';
             document.getElementById('waitingScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'none';
             document.getElementById('endScreen').style.display = 'none';
             document.getElementById('questionScreen').style.display = 'block';
+            
             showQuestion(data);
           } else if (data.type === 'tick') {
             updatePlayerTimerUI(data.time);
@@ -269,7 +303,9 @@
     });
 
     function showQuestion(data) {
-      updatePlayerTimerUI(20);
+      const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : 20;
+      updatePlayerTimerUI(startSeconds);
+
       const infoBar = document.getElementById('roundInfo');
       infoBar.innerText = `${data.round.toUpperCase()} • ${data.points} PT${data.points > 1 ? 'S' : ''}`;
       infoBar.className = data.round.includes("Clincher") ? "info-bar clincher-bar" : "info-bar";
@@ -295,6 +331,15 @@
         };
         container.appendChild(btn);
       });
+
+      if (startSeconds <= 0) {
+        isTimeUp = true;
+        document.getElementById('playerTimesUp').style.display = 'block';
+        disableOptions();
+      } else {
+        isTimeUp = false;
+        document.getElementById('playerTimesUp').style.display = 'none';
+      }
     }
 
     function disableOptions() {
