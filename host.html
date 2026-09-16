@@ -24,6 +24,7 @@
     .option-item { font-size: 18px; margin: 8px 0; font-weight: bold; color: #333; }
     .alert-banner { background: #fff3cd; color: #856404; padding: 12px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; }
     .room-code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #007bff; background: #e7f1ff; padding: 8px 20px; border-radius: 8px; display: inline-block; margin: 10px 0; }
+    .timer-box { font-size: 36px; font-weight: bold; color: #dc3545; background: #ffe6e6; border: 2px solid #dc3545; padding: 8px 20px; border-radius: 30px; display: inline-block; margin: 10px 0; }
   </style>
 </head>
 <body>
@@ -49,6 +50,7 @@
   <!-- QUESTION SCREEN -->
   <div class="card" id="questionArea" style="display:none;">
     <div><span class="badge" id="roundBadge">Round</span></div>
+    <div class="timer-box">⏱️ <span id="timerDisplay">20</span>s</div>
     <h3 id="qNumber" style="margin: 5px 0; color: #666;">Question 1</h3>
     <h1 id="qText" style="margin: 15px 0;">Question goes here...</h1>
     
@@ -70,11 +72,9 @@
   </div>
 
   <script>
-    // Fixed Room ID Generator
     const ROOM_CODE = "QUIZ" + Math.floor(1000 + Math.random() * 9000);
     document.getElementById('roomCodeDisplay').innerText = ROOM_CODE;
 
-    // QUESTIONS DEFINITION
     const questions = [
       { round: "Easy Round", points: 1, question: "What is the capital of the Philippines?", options: ["Cebu", "Manila", "Davao", "Quezon City"], answer: 1 },
       { round: "Easy Round", points: 1, question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Saturn"], answer: 1 },
@@ -96,19 +96,17 @@
     let currentQuestion = -1;
     let stepState = 'lobby'; 
     let players = {}; 
+    let playerAnswers = {}; // peerId: chosenOptionIndex
     let connections = [];
     let inClincherMode = false;
+    let timerInterval = null;
+    let timeLeft = 20;
 
-    // Connect to PeerJS Server
     const peer = new Peer(ROOM_CODE);
 
     peer.on('open', (id) => {
-      // Build player web URL for scanning
       const joinUrl = `https://cassandranichieagustin-hub.github.io/quiz-bee/player.html?room=${id}`;
-      
-      // Generate QR Code via reliable image API
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
-      
       document.getElementById("qrContainer").innerHTML = `<img src="${qrApiUrl}" width="200" height="200" alt="Join QR Code" />`;
     });
 
@@ -119,6 +117,7 @@
           players[conn.peer] = { name: data.name, score: 0 };
           updatePlayerLists();
         } else if (data.type === 'answer') {
+          playerAnswers[conn.peer] = data.option;
           const q = questions[currentQuestion];
           if (data.option === q.answer) {
             players[conn.peer].score += q.points;
@@ -141,12 +140,31 @@
       document.getElementById('playerList').innerHTML = playerArray.map(p => `<li><span>${p.name}</span> <span>${p.score} pts</span></li>`).join('');
     }
 
+    function startTimer() {
+      clearInterval(timerInterval);
+      timeLeft = 20;
+      document.getElementById('timerDisplay').innerText = timeLeft;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timerDisplay').innerText = timeLeft;
+        broadcast({ type: 'tick', time: timeLeft });
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          broadcast({ type: 'timeOut' });
+        }
+      }, 1000);
+    }
+
     function checkTieForFirst() {
       const sorted = Object.values(players).sort((a, b) => b.score - a.score);
       return sorted.length >= 2 && sorted[0].score > 0 && sorted[0].score === sorted[1].score;
     }
 
     function nextStep() {
+      clearInterval(timerInterval);
+
       if (stepState === 'lobby' || stepState === 'scoreboard' || stepState === 'roundDivider') {
         if (currentQuestion === 8 && !inClincherMode) {
           if (checkTieForFirst()) {
@@ -182,6 +200,7 @@
     }
 
     function showQuestion() {
+      playerAnswers = {}; // Reset answers for the new round
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('scoreboardArea').style.display = 'none';
       document.getElementById('questionArea').style.display = 'block';
@@ -207,6 +226,8 @@
         points: q.points,
         round: q.round
       });
+
+      startTimer();
     }
 
     function showScoreboard(isRoundEnd) {
@@ -225,7 +246,20 @@
       document.getElementById('manualClincherBtn').style.display = (currentQuestion === 8) ? 'inline-block' : 'none';
       document.getElementById('nextBtn').innerText = isRoundEnd ? "Start Next Round ➔" : "Next Question ➔";
 
-      broadcast({ type: 'scoreboard', leaderboard: sorted });
+      const currentQ = questions[currentQuestion];
+
+      // Send result feedback to individual players
+      connections.forEach(conn => {
+        const playerChoice = playerAnswers[conn.peer];
+        const isCorrect = (playerChoice === currentQ.answer);
+        
+        conn.send({
+          type: 'scoreboard',
+          leaderboard: sorted,
+          isCorrect: isCorrect,
+          correctAnswerText: `${['A','B','C','D'][currentQ.answer]}. ${currentQ.options[currentQ.answer]}`
+        });
+      });
     }
 
     function showRoundSummary() {
