@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quiz Bee Host</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 20px; }
     .card { background: white; max-width: 650px; margin: auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    #qrcode { display: flex; justify-content: center; margin: 20px 0; }
+    #qrContainer { margin: 20px 0; }
+    #qrContainer img { border: 4px solid #007bff; border-radius: 8px; padding: 5px; }
     button { background: #007bff; color: white; border: none; padding: 14px 28px; font-size: 18px; border-radius: 6px; cursor: pointer; margin-top: 15px; font-weight: bold; }
     button:hover { background: #0056b3; }
     .btn-secondary { background: #6c757d; margin-left: 10px; }
@@ -23,7 +23,7 @@
     .options-display { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
     .option-item { font-size: 18px; margin: 8px 0; font-weight: bold; color: #333; }
     .alert-banner { background: #fff3cd; color: #856404; padding: 12px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; }
-    .room-code { font-size: 36px; font-weight: bold; letter-spacing: 4px; color: #007bff; background: #e7f1ff; padding: 10px 20px; border-radius: 8px; display: inline-block; margin: 10px 0; }
+    .room-code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #007bff; background: #e7f1ff; padding: 8px 20px; border-radius: 8px; display: inline-block; margin: 10px 0; }
   </style>
 </head>
 <body>
@@ -31,10 +31,14 @@
   <!-- LOBBY SCREEN -->
   <div class="card" id="lobby">
     <h1>🏆 Quiz Bee Host</h1>
-    <p>Scan the QR Code with your iPad/Phone to join:</p>
-    <div id="qrcode"></div>
-    <p>ROOM CODE:</p>
-    <div class="room-code" id="roomCodeDisplay">---</div>
+    <p>Scan the QR Code with your iPad to join:</p>
+    
+    <div id="qrContainer">
+      <p><i>Generating QR Code...</i></p>
+    </div>
+
+    <p style="margin-bottom: 5px;">ROOM CODE:</p>
+    <div class="room-code" id="roomCodeDisplay">LOADING...</div>
     <br>
     <button onclick="nextStep()">Start Quiz Bee 🚀</button>
 
@@ -66,72 +70,46 @@
   </div>
 
   <script>
-    // Generate a simple 4-letter Room Code
-    const ROOM_CODE = "QUIZ-" + Math.floor(1000 + Math.random() * 9000);
+    // Fixed Room ID Generator
+    const ROOM_CODE = "QUIZ" + Math.floor(1000 + Math.random() * 9000);
     document.getElementById('roomCodeDisplay').innerText = ROOM_CODE;
 
     // QUESTIONS DEFINITION
     const questions = [
-      // EASY ROUND (1 Point Each)
       { round: "Easy Round", points: 1, question: "What is the capital of the Philippines?", options: ["Cebu", "Manila", "Davao", "Quezon City"], answer: 1 },
       { round: "Easy Round", points: 1, question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Saturn"], answer: 1 },
       { round: "Easy Round", points: 1, question: "How many sides does a triangle have?", options: ["3", "4", "5", "6"], answer: 0 },
 
-      // MODERATE ROUND (3 Points Each)
       { round: "Moderate Round", points: 3, question: "What is the powerhouse of the cell?", options: ["Nucleus", "Ribosome", "Mitochondria", "Cell Wall"], answer: 2 },
       { round: "Moderate Round", points: 3, question: "Who painted the Mona Lisa?", options: ["Van Gogh", "Picasso", "Da Vinci", "Monet"], answer: 2 },
       { round: "Moderate Round", points: 3, question: "What is 15 multiplied by 4?", options: ["45", "50", "60", "65"], answer: 2 },
 
-      // DIFFICULT ROUND (5 Points Each)
       { round: "Difficult Round", points: 5, question: "Which chemical element has the symbol 'O'?", options: ["Gold", "Oxygen", "Osmium", "Silver"], answer: 1 },
       { round: "Difficult Round", points: 5, question: "What is the largest ocean on Earth?", options: ["Atlantic", "Indian", "Arctic", "Pacific"], answer: 3 },
       { round: "Difficult Round", points: 5, question: "What year did World War II end?", options: ["1943", "1944", "1945", "1946"], answer: 2 },
 
-      // CLINCHER ROUND (10 Points Each)
       { round: "Clincher Round", points: 10, question: "[CLINCHER] What is the speed of light in vacuum?", options: ["300,000 km/s", "150,000 km/s", "1,000,000 km/s", "500,000 km/s"], answer: 0 },
       { round: "Clincher Round", points: 10, question: "[CLINCHER] Which organ produces insulin in the human body?", options: ["Liver", "Pancreas", "Kidney", "Heart"], answer: 1 },
       { round: "Clincher Round", points: 10, question: "[CLINCHER] What is the longest river in the world?", options: ["Amazon River", "Nile River", "Yangtze River", "Mississippi River"], answer: 1 }
     ];
 
-    let currentQuestion = -1; peer.on('open', (id) => {
-  const joinUrl = `https://cassandranichieagustin-hub.github.io/quiz-bee/player.html?room=${id}`;
-  
-  document.getElementById("qrcode").innerHTML = "";
-  new QRCode(document.getElementById("qrcode"), {
-    text: joinUrl,
-    width: 200,
-    height: 200
-  });
-}); 
-  // Update this to your live public website link:
-  const joinUrl = `https://your-site-name.netlify.app/player.html?room=${id}`;
-  
-  document.getElementById("qrcode").innerHTML = "";
-  new QRCode(document.getElementById("qrcode"), {
-    text: joinUrl,
-    width: 200,
-    height: 200
-  });
-});
+    let currentQuestion = -1;
     let stepState = 'lobby'; 
     let players = {}; 
     let connections = [];
     let inClincherMode = false;
 
-    // Connect to PeerJS using fixed Room Code
+    // Connect to PeerJS Server
     const peer = new Peer(ROOM_CODE);
 
     peer.on('open', (id) => {
-      // Direct Web Link generated for QR scanning
-      const joinUrl = `https://peerjs.com/static/demo/?room=${id}`;
+      // Build player web URL for scanning
+      const joinUrl = `https://cassandranichieagustin-hub.github.io/quiz-bee/player.html?room=${id}`;
       
-      // Clean QR Code generation
-      document.getElementById("qrcode").innerHTML = "";
-      new QRCode(document.getElementById("qrcode"), {
-        text: joinUrl,
-        width: 200,
-        height: 200
-      });
+      // Generate QR Code via reliable image API
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
+      
+      document.getElementById("qrContainer").innerHTML = `<img src="${qrApiUrl}" width="200" height="200" alt="Join QR Code" />`;
     });
 
     peer.on('connection', (conn) => {
