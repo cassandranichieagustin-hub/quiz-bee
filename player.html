@@ -13,6 +13,9 @@
     .btn:disabled { background: #666; cursor: not-allowed; }
     .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
     .clincher-bar { background: #6f42c1; color: white; }
+    .timer-badge { font-size: 22px; font-weight: bold; color: #ff6b6b; margin-bottom: 10px; }
+    .result-correct { background: #28a745; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
+    .result-wrong { background: #dc3545; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
   </style>
 </head>
 <body>
@@ -20,7 +23,7 @@
   <!-- JOIN SCREEN -->
   <div class="card" id="joinScreen">
     <h2>Join Quiz Bee</h2>
-    <input type="text" id="roomInput" placeholder="Enter Room Code (e.g. QUIZ-1234)" />
+    <input type="text" id="roomInput" placeholder="Enter Room Code (e.g. QUIZ1234)" />
     <input type="text" id="username" placeholder="Enter Your Name" />
     <button class="btn" style="text-align: center;" onclick="joinGame()">Join Room</button>
   </div>
@@ -34,19 +37,19 @@
   <!-- QUESTION SCREEN -->
   <div class="card" id="questionScreen" style="display:none;">
     <div class="info-bar" id="roundInfo">Round 1</div>
+    <div class="timer-badge">⏱️ Time Left: <span id="playerTimer">20</span>s</div>
     <h3 id="qText">Waiting...</h3>
     <div id="optionsContainer"></div>
   </div>
 
-  <!-- SCOREBOARD WAIT SCREEN -->
+  <!-- SCOREBOARD WAIT & RESULT FEEDBACK SCREEN -->
   <div class="card" id="scoreScreen" style="display:none;">
-    <h2>Round Complete! 📊</h2>
+    <div id="answerFeedback"></div>
     <h3 id="myScoreText" style="color: #61dafb; font-size: 24px;">Your Score: 0 pts</h3>
-    <p>Check the host screen for rankings.</p>
+    <p>Check the host screen for full rankings.</p>
   </div>
 
   <script>
-    // Auto-fill Room Code if passed via URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     const roomFromUrl = urlParams.get('room') || urlParams.get('host');
     if (roomFromUrl) {
@@ -56,6 +59,7 @@
     let peer = null;
     let conn = null;
     let playerName = '';
+    let answered = false;
 
     function joinGame() {
       const roomCode = document.getElementById('roomInput').value.trim().toUpperCase();
@@ -78,14 +82,30 @@
 
         conn.on('data', (data) => {
           if (data.type === 'question') {
+            answered = false;
             document.getElementById('waitingScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'none';
             document.getElementById('questionScreen').style.display = 'block';
             showQuestion(data);
+          } else if (data.type === 'tick') {
+            document.getElementById('playerTimer').innerText = data.time;
+          } else if (data.type === 'timeOut') {
+            document.getElementById('playerTimer').innerText = '0';
+            disableOptions();
           } else if (data.type === 'scoreboard') {
             document.getElementById('questionScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'block';
             
+            // Display feedback (Correct/Wrong)
+            const feedbackDiv = document.getElementById('answerFeedback');
+            if (data.isCorrect) {
+              feedbackDiv.className = 'result-correct';
+              feedbackDiv.innerHTML = '✅ CORRECT! (+points)';
+            } else {
+              feedbackDiv.className = 'result-wrong';
+              feedbackDiv.innerHTML = `❌ INCORRECT<br><small style="font-size: 14px; font-weight: normal;">Correct Answer: ${data.correctAnswerText}</small>`;
+            }
+
             const me = data.leaderboard.find(p => p.name === playerName);
             if (me) {
               document.getElementById('myScoreText').innerText = `Your Total Score: ${me.score} pts`;
@@ -105,6 +125,7 @@
     }
 
     function showQuestion(data) {
+      document.getElementById('playerTimer').innerText = '20';
       const infoBar = document.getElementById('roundInfo');
       infoBar.innerText = `${data.round.toUpperCase()} • ${data.points} PT${data.points > 1 ? 'S' : ''}`;
       infoBar.className = data.round.includes("Clincher") ? "info-bar clincher-bar" : "info-bar";
@@ -121,13 +142,19 @@
         btn.innerText = `${letters[idx]}. ${opt}`;
         
         btn.onclick = () => {
+          if (answered) return;
+          answered = true;
           conn.send({ type: 'answer', option: idx });
-          document.querySelectorAll('.btn').forEach(b => b.disabled = true);
-          btn.style.background = '#4CAF50';
+          disableOptions();
+          btn.style.background = '#007bff';
           btn.style.color = 'white';
         };
         container.appendChild(btn);
       });
+    }
+
+    function disableOptions() {
+      document.querySelectorAll('#optionsContainer .btn').forEach(b => b.disabled = true);
     }
   </script>
 </body>
