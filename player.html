@@ -9,8 +9,9 @@
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #282c34; color: white; margin: 0; padding: 20px; }
     .card { background: #3b4049; max-width: 400px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     input { width: 85%; padding: 12px; margin-bottom: 12px; border-radius: 6px; border: none; font-size: 16px; text-align: center; }
-    .btn { background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; }
-    .btn:disabled { background: #666; cursor: not-allowed; }
+    .btn { background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.2s ease; }
+    .btn.selected { background: #007bff !important; color: white !important; transform: scale(1.02); box-shadow: 0 0 10px rgba(0,123,255,0.5); }
+    .btn:disabled { background: #666; cursor: not-allowed; transform: none; box-shadow: none; }
     .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
     .clincher-bar { background: #6f42c1; color: white; }
     .timer-badge { font-size: 22px; font-weight: bold; color: #ff6b6b; margin-bottom: 10px; }
@@ -59,7 +60,7 @@
     let peer = null;
     let conn = null;
     let playerName = '';
-    let answered = false;
+    let isTimeUp = false;
 
     function joinGame() {
       const roomCode = document.getElementById('roomInput').value.trim().toUpperCase();
@@ -82,7 +83,7 @@
 
         conn.on('data', (data) => {
           if (data.type === 'question') {
-            answered = false;
+            isTimeUp = false;
             document.getElementById('waitingScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'none';
             document.getElementById('questionScreen').style.display = 'block';
@@ -90,17 +91,18 @@
           } else if (data.type === 'tick') {
             document.getElementById('playerTimer').innerText = data.time;
           } else if (data.type === 'timeOut') {
+            isTimeUp = true;
             document.getElementById('playerTimer').innerText = '0';
             disableOptions();
           } else if (data.type === 'scoreboard') {
+            isTimeUp = true;
             document.getElementById('questionScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'block';
             
-            // Display feedback (Correct/Wrong)
             const feedbackDiv = document.getElementById('answerFeedback');
             if (data.isCorrect) {
               feedbackDiv.className = 'result-correct';
-              feedbackDiv.innerHTML = '✅ CORRECT! (+points)';
+              feedbackDiv.innerHTML = '✅ CORRECT!';
             } else {
               feedbackDiv.className = 'result-wrong';
               feedbackDiv.innerHTML = `❌ INCORRECT<br><small style="font-size: 14px; font-weight: normal;">Correct Answer: ${data.correctAnswerText}</small>`;
@@ -142,12 +144,16 @@
         btn.innerText = `${letters[idx]}. ${opt}`;
         
         btn.onclick = () => {
-          if (answered) return;
-          answered = true;
+          if (isTimeUp) return;
+
+          // Clear selected state from all buttons
+          document.querySelectorAll('#optionsContainer .btn').forEach(b => b.classList.remove('selected'));
+
+          // Highlight current choice
+          btn.classList.add('selected');
+
+          // Send updated answer choice to host
           conn.send({ type: 'answer', option: idx });
-          disableOptions();
-          btn.style.background = '#007bff';
-          btn.style.color = 'white';
         };
         container.appendChild(btn);
       });
