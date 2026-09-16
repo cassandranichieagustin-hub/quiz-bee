@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Bee Host</title>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 20px; }
+    .card { background: white; max-width: 650px; margin: auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    #qrcode { display: flex; justify-content: center; margin: 20px 0; }
+    button { background: #007bff; color: white; border: none; padding: 14px 28px; font-size: 18px; border-radius: 6px; cursor: pointer; margin-top: 15px; font-weight: bold; }
+    button:hover { background: #0056b3; }
+    .btn-secondary { background: #6c757d; margin-left: 10px; }
+    .badge { display: inline-block; padding: 6px 14px; border-radius: 20px; color: white; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; font-size: 14px; }
+    .easy { background: #28a745; }
+    .moderate { background: #fd7e14; }
+    .difficult { background: #dc3545; }
+    .clincher { background: #6f42c1; }
+    ul { list-style: none; padding: 0; }
+    li { background: #e9ecef; margin: 8px 0; padding: 12px 16px; border-radius: 6px; display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
+    .options-display { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .option-item { font-size: 18px; margin: 8px 0; font-weight: bold; color: #333; }
+    .alert-banner { background: #fff3cd; color: #856404; padding: 12px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; }
+    .room-code { font-size: 36px; font-weight: bold; letter-spacing: 4px; color: #007bff; background: #e7f1ff; padding: 10px 20px; border-radius: 8px; display: inline-block; margin: 10px 0; }
+  </style>
+</head>
+<body>
+
+  <!-- LOBBY SCREEN -->
+  <div class="card" id="lobby">
+    <h1>🏆 Quiz Bee Host</h1>
+    <p>Scan the QR Code with your iPad/Phone to join:</p>
+    <div id="qrcode"></div>
+    <p>ROOM CODE:</p>
+    <div class="room-code" id="roomCodeDisplay">---</div>
+    <br>
+    <button onclick="nextStep()">Start Quiz Bee 🚀</button>
+
+    <h3>Connected Players (<span id="playerCount">0</span>)</h3>
+    <ul id="playerList"></ul>
+  </div>
+
+  <!-- QUESTION SCREEN -->
+  <div class="card" id="questionArea" style="display:none;">
+    <div><span class="badge" id="roundBadge">Round</span></div>
+    <h3 id="qNumber" style="margin: 5px 0; color: #666;">Question 1</h3>
+    <h1 id="qText" style="margin: 15px 0;">Question goes here...</h1>
+    
+    <div class="options-display" id="optionsList"></div>
+    
+    <button id="qNextBtn" onclick="nextStep()">Show Leaderboard 📊</button>
+  </div>
+
+  <!-- SCOREBOARD SCREEN -->
+  <div class="card" id="scoreboardArea" style="display:none;">
+    <div id="tieAlert" class="alert-banner" style="display:none;">⚠️ TIE DETECTED FOR 1ST PLACE! Clincher Round Initiated.</div>
+    <h1 id="scoreboardTitle">📊 Current Standings</h1>
+    <ul id="roundScoreboard"></ul>
+    
+    <div>
+      <button id="nextBtn" onclick="nextStep()">Next Question ➔</button>
+      <button id="manualClincherBtn" class="btn-secondary" style="display:none;" onclick="startClincherManually()">Force Clincher Round ⚡</button>
+    </div>
+  </div>
+
+  <script>
+    // Generate a simple 4-letter Room Code
+    const ROOM_CODE = "QUIZ-" + Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('roomCodeDisplay').innerText = ROOM_CODE;
+
+    // QUESTIONS DEFINITION
+    const questions = [
+      // EASY ROUND (1 Point Each)
+      { round: "Easy Round", points: 1, question: "What is the capital of the Philippines?", options: ["Cebu", "Manila", "Davao", "Quezon City"], answer: 1 },
+      { round: "Easy Round", points: 1, question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Saturn"], answer: 1 },
+      { round: "Easy Round", points: 1, question: "How many sides does a triangle have?", options: ["3", "4", "5", "6"], answer: 0 },
+
+      // MODERATE ROUND (3 Points Each)
+      { round: "Moderate Round", points: 3, question: "What is the powerhouse of the cell?", options: ["Nucleus", "Ribosome", "Mitochondria", "Cell Wall"], answer: 2 },
+      { round: "Moderate Round", points: 3, question: "Who painted the Mona Lisa?", options: ["Van Gogh", "Picasso", "Da Vinci", "Monet"], answer: 2 },
+      { round: "Moderate Round", points: 3, question: "What is 15 multiplied by 4?", options: ["45", "50", "60", "65"], answer: 2 },
+
+      // DIFFICULT ROUND (5 Points Each)
+      { round: "Difficult Round", points: 5, question: "Which chemical element has the symbol 'O'?", options: ["Gold", "Oxygen", "Osmium", "Silver"], answer: 1 },
+      { round: "Difficult Round", points: 5, question: "What is the largest ocean on Earth?", options: ["Atlantic", "Indian", "Arctic", "Pacific"], answer: 3 },
+      { round: "Difficult Round", points: 5, question: "What year did World War II end?", options: ["1943", "1944", "1945", "1946"], answer: 2 },
+
+      // CLINCHER ROUND (10 Points Each)
+      { round: "Clincher Round", points: 10, question: "[CLINCHER] What is the speed of light in vacuum?", options: ["300,000 km/s", "150,000 km/s", "1,000,000 km/s", "500,000 km/s"], answer: 0 },
+      { round: "Clincher Round", points: 10, question: "[CLINCHER] Which organ produces insulin in the human body?", options: ["Liver", "Pancreas", "Kidney", "Heart"], answer: 1 },
+      { round: "Clincher Round", points: 10, question: "[CLINCHER] What is the longest river in the world?", options: ["Amazon River", "Nile River", "Yangtze River", "Mississippi River"], answer: 1 }
+    ];
+
+    let currentQuestion = -1;
+    let stepState = 'lobby'; 
+    let players = {}; 
+    let connections = [];
+    let inClincherMode = false;
+
+    // Connect to PeerJS using fixed Room Code
+    const peer = new Peer(ROOM_CODE);
+
+    peer.on('open', (id) => {
+      // Direct Web Link generated for QR scanning
+      const joinUrl = `https://peerjs.com/static/demo/?room=${id}`;
+      
+      // Clean QR Code generation
+      document.getElementById("qrcode").innerHTML = "";
+      new QRCode(document.getElementById("qrcode"), {
+        text: joinUrl,
+        width: 200,
+        height: 200
+      });
+    });
+
+    peer.on('connection', (conn) => {
+      connections.push(conn);
+      conn.on('data', (data) => {
+        if (data.type === 'join') {
+          players[conn.peer] = { name: data.name, score: 0 };
+          updatePlayerLists();
+        } else if (data.type === 'answer') {
+          const q = questions[currentQuestion];
+          if (data.option === q.answer) {
+            players[conn.peer].score += q.points;
+          }
+        }
+      });
+      conn.on('close', () => {
+        delete players[conn.peer];
+        updatePlayerLists();
+      });
+    });
+
+    function broadcast(data) {
+      connections.forEach(conn => conn.send(data));
+    }
+
+    function updatePlayerLists() {
+      const playerArray = Object.values(players);
+      document.getElementById('playerCount').innerText = playerArray.length;
+      document.getElementById('playerList').innerHTML = playerArray.map(p => `<li><span>${p.name}</span> <span>${p.score} pts</span></li>`).join('');
+    }
+
+    function checkTieForFirst() {
+      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+      return sorted.length >= 2 && sorted[0].score > 0 && sorted[0].score === sorted[1].score;
+    }
+
+    function nextStep() {
+      if (stepState === 'lobby' || stepState === 'scoreboard' || stepState === 'roundDivider') {
+        if (currentQuestion === 8 && !inClincherMode) {
+          if (checkTieForFirst()) {
+            inClincherMode = true;
+            document.getElementById('tieAlert').style.display = 'block';
+            currentQuestion = 9;
+            stepState = 'question';
+            showQuestion();
+            return;
+          } else {
+            showFinalWinner();
+            return;
+          }
+        }
+
+        currentQuestion++;
+        if (currentQuestion < questions.length) {
+          stepState = 'question';
+          showQuestion();
+        } else {
+          showFinalWinner();
+        }
+
+      } else if (stepState === 'question') {
+        if (currentQuestion === 2 || currentQuestion === 5 || currentQuestion === 8) {
+          stepState = 'roundDivider';
+          showRoundSummary();
+        } else {
+          stepState = 'scoreboard';
+          showScoreboard(false);
+        }
+      }
+    }
+
+    function showQuestion() {
+      document.getElementById('lobby').style.display = 'none';
+      document.getElementById('scoreboardArea').style.display = 'none';
+      document.getElementById('questionArea').style.display = 'block';
+
+      const q = questions[currentQuestion];
+      const letters = ['A', 'B', 'C', 'D'];
+
+      const badge = document.getElementById('roundBadge');
+      badge.innerText = `${q.round} (${q.points} PT${q.points > 1 ? 'S' : ''})`;
+      badge.className = `badge ${q.round.split(' ')[0].toLowerCase()}`;
+
+      document.getElementById('qNumber').innerText = `Question ${currentQuestion + 1} of ${questions.length}`;
+      document.getElementById('qText').innerText = q.question;
+      
+      document.getElementById('optionsList').innerHTML = q.options.map((opt, i) => 
+        `<div class="option-item"><b>${letters[i]}.</b> ${opt}</div>`
+      ).join('');
+
+      broadcast({
+        type: 'question',
+        question: q.question,
+        options: q.options,
+        points: q.points,
+        round: q.round
+      });
+    }
+
+    function showScoreboard(isRoundEnd) {
+      document.getElementById('questionArea').style.display = 'none';
+      document.getElementById('scoreboardArea').style.display = 'block';
+
+      document.getElementById('scoreboardTitle').innerText = isRoundEnd ? "🎉 Round Tallyboard" : "📊 Current Standings";
+
+      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+
+      document.getElementById('roundScoreboard').innerHTML = sorted.map((p, index) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+        return `<li><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
+      }).join('');
+
+      document.getElementById('manualClincherBtn').style.display = (currentQuestion === 8) ? 'inline-block' : 'none';
+      document.getElementById('nextBtn').innerText = isRoundEnd ? "Start Next Round ➔" : "Next Question ➔";
+
+      broadcast({ type: 'scoreboard', leaderboard: sorted });
+    }
+
+    function showRoundSummary() {
+      showScoreboard(true);
+      const currentRoundName = questions[currentQuestion].round;
+      document.getElementById('scoreboardTitle').innerText = `🏁 END OF ${currentRoundName.toUpperCase()} TALLYBOARD`;
+    }
+
+    function startClincherManually() {
+      inClincherMode = true;
+      currentQuestion = 8;
+      document.getElementById('tieAlert').innerText = "⚡ MANUAL CLINCHER ROUND ACTIVATED!";
+      document.getElementById('tieAlert').style.display = 'block';
+      nextStep();
+    }
+
+    function showFinalWinner() {
+      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+      const winner = sorted[0] ? sorted[0].name : 'No one';
+      
+      document.getElementById('scoreboardArea').style.display = 'none';
+      document.getElementById('questionArea').style.display = 'block';
+      document.getElementById('questionArea').innerHTML = `
+        <h1>🏆 GRAND CHAMPION 🏆</h1>
+        <h2 style="color: #007bff; font-size: 34px;">👑 ${winner}</h2>
+        <h3>Final Quiz Bee Tallyboard:</h3>
+        <ul>${sorted.map((p, i) => `<li><span>${i+1}. ${p.name}</span> <span>${p.score} pts</span></li>`).join('')}</ul>
+      `;
+      broadcast({ type: 'end', winner: winner });
+    }
+  </script>
+</body>
+</html>
