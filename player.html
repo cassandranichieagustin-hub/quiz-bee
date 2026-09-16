@@ -14,7 +14,6 @@
     .btn { background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.2s ease; }
     .btn.selected { background: #007bff !important; color: white !important; transform: scale(1.02); box-shadow: 0 0 10px rgba(0,123,255,0.5); }
     .btn:disabled { background: #666; cursor: not-allowed; transform: none; box-shadow: none; }
-    .btn-secondary { background: #6c757d; color: white; width: auto; padding: 8px 16px; font-size: 14px; margin-top: 10px; display: inline-block; }
     .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
     .clincher-bar { background: #6f42c1; color: white; }
     
@@ -70,7 +69,6 @@
   <div class="card" id="waitingScreen" style="display:none;">
     <h2 id="waitingStatus">Connected! 🚀</h2>
     <p>Waiting for host to start...</p>
-    <button class="btn btn-secondary" onclick="resetIdentity()">Change Name / Room</button>
   </div>
 
   <!-- QUESTION SCREEN -->
@@ -104,7 +102,6 @@
     <h3 id="finalScoreText" style="color: #61dafb; font-size: 24px;">Final Score: 0 pts</h3>
     <h4 style="margin: 15px 0 5px 0; text-align: left; color: #aaa;">🏆 Final Standings</h4>
     <ul class="leaderboard-list" id="finalLeaderboardView"></ul>
-    <button class="btn btn-secondary" onclick="resetIdentity()">Leave Room</button>
   </div>
 
   <script>
@@ -119,7 +116,6 @@
     let roomCode = '';
     let isTimeUp = false;
 
-    // Load saved identity if user reopens or refreshes the page
     window.addEventListener('DOMContentLoaded', () => {
       const savedRoom = roomFromUrl || localStorage.getItem('qb_room');
       const savedName = localStorage.getItem('qb_name');
@@ -135,7 +131,6 @@
         playerSection = savedSection;
         fullPlayerIdentifier = playerSection ? `${playerName} (${playerSection})` : playerName;
 
-        // Auto-reconnect without presenting the login form
         document.getElementById('joinScreen').style.display = 'none';
         document.getElementById('waitingScreen').style.display = 'block';
         document.getElementById('waitingStatus').innerText = "Restoring Connection... 🔄";
@@ -152,21 +147,12 @@
         return alert('Please enter both Room Code and your Name!');
       }
 
-      // Save user details to localStorage
       localStorage.setItem('qb_room', roomCode);
       localStorage.setItem('qb_name', playerName);
       localStorage.setItem('qb_section', playerSection);
 
       fullPlayerIdentifier = playerSection ? `${playerName} (${playerSection})` : playerName;
       connectToHost();
-    }
-
-    function resetIdentity() {
-      localStorage.removeItem('qb_room');
-      localStorage.removeItem('qb_name');
-      localStorage.removeItem('qb_section');
-      if (peer) peer.destroy();
-      location.reload();
     }
 
     function connectToHost() {
