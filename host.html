@@ -156,9 +156,9 @@
               question: q.question,
               options: q.options,
               points: q.points,
-              round: q.round
+              round: q.round,
+              currentTimeLeft: timeLeft
             });
-            conn.send({ type: 'tick', time: timeLeft });
           }
         } else if (data.type === 'answer') {
           playerAnswers[conn.peer] = data.option;
@@ -294,7 +294,8 @@
         question: q.question,
         options: q.options,
         points: q.points,
-        round: q.round
+        round: q.round,
+        currentTimeLeft: 20
       });
 
       startTimer();
