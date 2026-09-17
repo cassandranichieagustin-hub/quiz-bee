@@ -1,3 +1,9 @@
+Here is the complete, fully updated host.html file.
+Key Features Included:
+ * Simplified Difficult Round: Heavy numerical calculations have been replaced with conceptual identification questions (e.g., matching physical laws, simple machines, wave phenomena, and chemical hazards).
+ * 30-Second Identification Mode: Players get a text box during the Difficult Round, and answers are validated automatically on the host side using case-insensitive string matching.
+ * Exact Timers: Easy Round (10s), Moderate Round (15s), and Difficult Round (30s).
+ * Cleaned Set Options: Dropdown is labeled strictly as Set 1, Set 2, and Set 3 with mixed topics across Term 1 Grade 11 General Science competencies.
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -137,12 +143,12 @@
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Which regulatory agency sets environmental disposal standards for chemical waste in the Philippines?", options: ["DTI", "FDA", "DENR", "DOST"], answer: 2 },
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Laser light differs from ordinary light bulb radiation because laser light is what?", options: ["Polychromatic", "Coherent and monochromatic", "Diffuse", "Incoherent"], answer: 1 },
         
-        // Difficult Round (30s, 5pts, Identification / Typed Input)
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What optical phenomenon allows light signals to travel through fiber optic cables without escaping?", answer: "total internal reflection" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What additive in synthetic detergents causes algal blooms and eutrophication in river systems?", answer: "phosphate" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "If a wheel of radius 0.5 meters rotates at 4 rad/s, what is the linear speed at its outer rim in m/s?", answer: "2" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "In a hydraulic press, an input piston area of 0.02 m² receives 100 N. What output force in Newtons is created at a 0.2 m² piston?", answer: "1000" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "A ship floats in seawater because its hollow hull configuration increases displaced volume to lower overall what?", answer: "density" }
+        // Difficult Round (30s, 5pts, Concept Identification)
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What optical phenomenon allows light signals to travel inside fiber optic cables without escaping?", answer: "total internal reflection" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What detergent chemical additive causes algal blooms and oxygen depletion in rivers?", answer: "phosphate" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What rotational force causes an object to turn or rotate around a pivot or fulcrum?", answer: "torque" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What upward force is exerted by a fluid on an object placed in it according to Archimedes' principle?", answer: "buoyant force" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What hollow hull design allows massive metal ships to float by increasing displaced water volume?", answer: "density" }
       ],
       2: [
         // Easy Round (10s, 1pt, MC)
@@ -169,12 +175,12 @@
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "An object submerged in water experiences an upward buoyant force of 50 N. What mass of water was displaced in kg? (g = 9.8 m/s²)", options: ["2.5 kg", "5.1 kg", "10.0 kg", "50.0 kg"], answer: 1 },
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Holograms differ from standard 3D photographs because holographic recording captures what wave characteristic?", options: ["Amplitude only", "Phase information and interference patterns", "Speed variations", "Wavelength reduction"], answer: 1 },
         
-        // Difficult Round (30s, 5pts, Identification / Typed Input)
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What torque in N·m is produced at the fulcrum by applying 200 N perpendicularly at the end of a 2 m lever arm?", answer: "400" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "A block weighs 30 N in air and 20 N when submerged in water. What is the buoyant force in Newtons acting on it?", answer: "10" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "Improper disposal of batteries into landfills hazards groundwater due to leaching of what class of metals?", answer: "heavy metals" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "If a circuit operating at 220 V has a total resistance of 22 ohms, what current in Amperes flows through the wiring?", answer: "10" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "Which monochromatic, collimated light tool is used for precise surgical incisions in medicine?", answer: "laser" }
+        // Difficult Round (30s, 5pts, Concept Identification)
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What simple machine component acts as a fixed pivot point about which a lever rotates?", answer: "fulcrum" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What class of hazardous metals like lead and cadmium leach into groundwater from improper battery disposal?", answer: "heavy metals" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What safety device automatically breaks an electric circuit when current amperage exceeds safe limits?", answer: "circuit breaker" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "Which medical innovation uses focused, coherent light waves for precise tissue incisions?", answer: "laser" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What fluid property describes a liquid's resistance to flow and internal friction?", answer: "viscosity" }
       ],
       3: [
         // Easy Round (10s, 1pt, MC)
@@ -201,12 +207,12 @@
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Converting linear motion into angular rotation depends on applying force at what distance from an axis?", options: ["At zero distance", "At a perpendicular distance (radius) to create torque", "Parallel to the bar", "At the exact center of mass"], answer: 1 },
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why do modern energy-efficient air conditioners with inverter technology consume less electricity?", options: ["They run at maximum speed constantly", "They adjust compressor motor speed dynamically instead of cycling fully ON/OFF", "They bypass home circuit breakers", "They utilize hydraulic pumps"], answer: 1 },
         
-        // Difficult Round (30s, 5pts, Identification / Typed Input)
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "If a hydraulic press has an input piston radius of 2 cm and output piston radius of 10 cm, what is its force multiplier?", answer: "25" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "A raft has a volume of 2 m³. If freshwater density is 1000 kg/m³, what maximum mass in kg can it support before submerging?", answer: "2000" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "Which chelating agent in liquid soaps prevents metal ion precipitation in hard water?", answer: "edta" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "If a 100 W LED fixture operates for 10 hours daily, how much electrical energy in kWh does it consume in a 30-day month?", answer: "30" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "By reflecting light internally at angles greater than the critical angle, what cables retain light signals over long distances?", answer: "fiber optic" }
+        // Difficult Round (30s, 5pts, Concept Identification)
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What additive in personal care soaps acts as a chelating agent to soften hard water?", answer: "edta" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What wave interaction causes noise-canceling headphones to reduce background sound?", answer: "destructive interference" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What physical property of a body resists changes in its rotational state of motion?", answer: "rotational inertia" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What heating process eliminates disease-causing pathogens in milk and fruit juices?", answer: "pasteurization" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What simple machine consists of a wheel with a groove holding a rope or cable?", answer: "pulley" }
       ]
     };
 
@@ -560,3 +566,4 @@
   </script>
 </body>
 </html>
+
