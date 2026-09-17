@@ -33,12 +33,7 @@
     .text-input-field:disabled { background: #666 !important; pointer-events: none !important; }
 
     .times-up-banner {
-      display: none;
-      font-size: 26px;
-      font-weight: 900;
-      color: #ff4d4d;
-      letter-spacing: 2px;
-      margin: 10px 0;
+      display: none; font-size: 26px; font-weight: 900; color: #ff4d4d; letter-spacing: 2px; margin: 10px 0;
       animation: pulsePlayer 0.8s infinite alternate;
     }
     @keyframes pulsePlayer {
@@ -374,6 +369,7 @@
       }
     });
 
+    // Explicit state reset on rendering a new question
     function renderQuestion(data) {
       isTimeUp = false;
       document.getElementById('playerTimesUp').style.display = 'none';
@@ -396,7 +392,7 @@
       document.getElementById('qText').innerText = data.question;
       
       const container = document.getElementById('optionsContainer');
-      container.innerHTML = '';
+      container.innerHTML = ''; // Wipe DOM elements from previous turn
 
       if (data.qType === 'text') {
         const textInput = document.createElement('input');
