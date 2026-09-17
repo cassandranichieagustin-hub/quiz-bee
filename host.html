@@ -3,455 +3,188 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quiz Bee - Player</title>
+  <title>Quiz Bee - Host Dashboard</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #282c34; color: white; margin: 0; padding: 20px; }
-    .card { background: #3b4049; max-width: 400px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    input[type="text"] { width: 85%; padding: 12px; margin-bottom: 12px; border-radius: 6px; border: none; font-size: 16px; text-align: center; }
-    .section-field { display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; margin-bottom: 12px; }
-    .section-field input { width: 140px; margin: 0 0 0 8px; padding: 8px; border-bottom: 2px solid #61dafb; border-radius: 0; background: transparent; color: white; font-weight: bold; }
-    .btn { background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.2s ease; pointer-events: auto !important; }
-    .btn.selected { background: #007bff !important; color: white !important; transform: scale(1.02); box-shadow: 0 0 10px rgba(0,123,255,0.5); }
-    .btn:disabled { background: #666 !important; cursor: not-allowed; pointer-events: none !important; transform: none; box-shadow: none; }
-    .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
-    .clincher-bar { background: #6f42c1; color: white; }
-    
-    .q-counter-badge { font-size: 15px; font-weight: bold; color: #61dafb; margin-bottom: 6px; }
-
-    .timer-container { margin: 10px 0 15px 0; }
-    .timer-badge { font-size: 22px; font-weight: bold; color: #ff6b6b; margin-bottom: 6px; }
-    .progress-bar-bg { background: #20232a; height: 12px; border-radius: 10px; overflow: hidden; width: 100%; }
-    .progress-bar-fill { background: #28a745; height: 100%; width: 100%; transition: width 1s linear, background-color 0.5s ease; }
-    
-    .result-correct { background: #28a745; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
-    .result-wrong { background: #dc3545; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
-    #qText { font-size: 20px; margin: 15px 0; color: #fff; line-height: 1.4; }
-    
-    .text-input-field { background: #fff; color: #333; font-size: 18px; font-weight: bold; padding: 14px; border-radius: 8px; width: 90%; border: none; margin-bottom: 10px; pointer-events: auto !important; }
-    .text-input-field:disabled { background: #666 !important; pointer-events: none !important; }
-
-    .times-up-banner {
-      display: none;
-      font-size: 26px;
-      font-weight: 900;
-      color: #ff4d4d;
-      letter-spacing: 2px;
-      margin: 10px 0;
-      animation: pulsePlayer 0.8s infinite alternate;
-    }
-    @keyframes pulsePlayer {
-      0% { transform: scale(1); opacity: 0.8; text-shadow: 0 0 5px rgba(255, 77, 77, 0.4); }
-      100% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 18px rgba(255, 77, 77, 0.9); }
-    }
-
-    .leaderboard-list { list-style: none; padding: 0; margin-top: 15px; text-align: left; }
-    .leaderboard-list li { background: #20232a; margin: 6px 0; padding: 10px 14px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; }
-
-    .place-1st { background: linear-gradient(135deg, #ffe259, #ffa751); color: #333; padding: 18px; border-radius: 10px; font-size: 22px; font-weight: 900; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5); }
-    .place-2nd { background: linear-gradient(135deg, #e0e0e0, #f5f5f5); color: #333; padding: 16px; border-radius: 10px; font-size: 20px; font-weight: 900; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(192, 192, 192, 0.5); }
-    .place-3rd { background: linear-gradient(135deg, #e5a65d, #c5793e); color: white; padding: 16px; border-radius: 10px; font-size: 20px; font-weight: 900; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(205, 127, 50, 0.5); }
-    .place-other { background: #20232a; color: #61dafb; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #1e222b; color: white; margin: 0; padding: 20px; }
+    .card { background: #2c313c; max-width: 600px; margin: auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+    .btn { background: #61dafb; color: #1e222b; border: none; padding: 14px 20px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; margin: 10px 5px; transition: background 0.2s; }
+    .btn:hover { background: #4fa8d1; }
+    .btn-danger { background: #dc3545; color: white; }
+    .room-badge { font-size: 32px; font-weight: bold; color: #61dafb; letter-spacing: 2px; margin: 10px 0; }
+    .player-list, .leaderboard { list-style: none; padding: 0; text-align: left; max-height: 250px; overflow-y: auto; }
+    .player-list li, .leaderboard li { background: #20232a; margin: 6px 0; padding: 10px 14px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; }
+    .timer-display { font-size: 36px; font-weight: bold; color: #ff6b6b; margin: 15px 0; }
+    .q-title { font-size: 22px; margin: 15px 0; color: #fff; }
+    .opt-box { background: #3b4049; padding: 10px; margin: 6px 0; border-radius: 6px; text-align: left; }
   </style>
 </head>
 <body>
 
-  <!-- JOIN SCREEN -->
-  <div class="card" id="joinScreen">
-    <h2>Join Quiz Bee</h2>
-    <input type="text" id="roomInput" placeholder="Enter Room Code (e.g. QUIZ1234)" />
-    
-    <div class="section-field">
-      <span>GRADE 11 Section</span>
-      <input type="text" id="sectionInput" placeholder="________" />
-    </div>
-
-    <input type="text" id="username" placeholder="Enter Your Name" />
-    <button class="btn" style="text-align: center;" onclick="joinGame()">Join Room</button>
+  <!-- LOBBY SCREEN -->
+  <div class="card" id="lobbyScreen">
+    <h2>Quiz Bee Host Dashboard</h2>
+    <p>Room Code:</p>
+    <div class="room-badge" id="displayRoomCode">GENERATING...</div>
+    <h3>Connected Players (<span id="playerCount">0</span>)</h3>
+    <ul class="player-list" id="playerList"></ul>
+    <button class="btn" onclick="startQuiz()">🚀 Start Quiz</button>
   </div>
 
-  <!-- WAITING SCREEN -->
-  <div class="card" id="waitingScreen" style="display:none;">
-    <h2 id="waitingStatus">Connected! 🚀</h2>
-    <p>Waiting for host to start...</p>
+  <!-- QUESTION CONTROL SCREEN -->
+  <div class="card" id="hostQuestionScreen" style="display:none;">
+    <div style="color: #61dafb; font-weight: bold;" id="hostQCounter">Question 1</div>
+    <div class="timer-display">⏱️ <span id="hostTimer">10</span>s</div>
+    <h3 class="q-title" id="hostQText">Question text goes here...</h3>
+    <div id="hostOptions"></div>
+    <br>
+    <button class="btn btn-danger" onclick="endQuestionEarly()">🛑 Stop Timer</button>
   </div>
 
-  <!-- QUESTION SCREEN -->
-  <div class="card" id="questionScreen" style="display:none;">
-    <div class="q-counter-badge" id="playerQCounter">Question 1 of 10</div>
-    <div class="info-bar" id="roundInfo">Round 1</div>
-    
-    <div class="timer-container">
-      <div class="timer-badge">⏱️ Time Left: <span id="playerTimer">10</span>s</div>
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" id="playerTimerBar"></div>
-      </div>
-    </div>
-
-    <div class="times-up-banner" id="playerTimesUp">🚨 TIME'S UP! 🚨</div>
-    <h3 id="qText">Waiting for question...</h3>
-    <div id="optionsContainer"></div>
-  </div>
-
-  <!-- SCOREBOARD WAIT & RESULT FEEDBACK SCREEN -->
-  <div class="card" id="scoreScreen" style="display:none;">
-    <div id="answerFeedback"></div>
-    <h3 id="myScoreText" style="color: #61dafb; font-size: 24px; margin-bottom: 5px;">Your Score: 0 pts</h3>
-    
-    <h4 style="margin: 15px 0 5px 0; text-align: left; color: #aaa;">📊 Current Leaderboard</h4>
-    <ul class="leaderboard-list" id="playerLeaderboardView"></ul>
-  </div>
-
-  <!-- END GAME / PODIUM SCREEN -->
-  <div class="card" id="endScreen" style="display:none;">
-    <div id="placementBanner"></div>
-    <h3 id="finalScoreText" style="color: #61dafb; font-size: 24px;">Final Score: 0 pts</h3>
-    <h4 style="margin: 15px 0 5px 0; text-align: left; color: #aaa;">🏆 Final Standings</h4>
-    <ul class="leaderboard-list" id="finalLeaderboardView"></ul>
+  <!-- SCOREBOARD SCREEN -->
+  <div class="card" id="hostScoreScreen" style="display:none;">
+    <h2>📊 Current Leaderboard</h2>
+    <ul class="leaderboard" id="hostLeaderboard"></ul>
+    <button class="btn" onclick="nextQuestion()">➡️ Next Question</button>
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomFromUrl = urlParams.get('room') || urlParams.get('host');
-    
     let peer = null;
-    let conn = null;
-    let playerName = '';
-    let playerSection = '';
-    let fullPlayerIdentifier = '';
-    let playerUid = '';
-    let roomCode = '';
-    let isTimeUp = false;
-    let reconnectTimer = null;
-    let isTerminated = false;
-    let currentMaxTimer = 10;
-    let currentQuestionIndex = -1;
+    let connections = {};
+    let players = []; 
+    let currentQIndex = 0;
+    let timerInterval = null;
+    let timeLeft = 10;
+    let roomCode = 'QUIZ' + Math.floor(1000 + Math.random() * 9000);
 
-    function getOrCreateUid() {
-      let uid = localStorage.getItem('qb_uid');
-      if (!uid) {
-        uid = 'P_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-        localStorage.setItem('qb_uid', uid);
-      }
-      return uid;
-    }
-
-    function resetSessionState() {
-      isTerminated = true;
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      localStorage.removeItem('qb_room');
-      
-      if (conn) { try { conn.close(); } catch(e){} }
-      if (peer) { try { peer.destroy(); } catch(e){} }
-
-      document.getElementById('questionScreen').style.display = 'none';
-      document.getElementById('scoreScreen').style.display = 'none';
-      document.getElementById('endScreen').style.display = 'none';
-      document.getElementById('waitingScreen').style.display = 'none';
-      document.getElementById('joinScreen').style.display = 'block';
-
-      if (roomFromUrl) {
-        document.getElementById('roomInput').value = roomFromUrl.toUpperCase();
-      }
-    }
+    // Sample Question Pool
+    const quizData = [
+      { round: "Round 1", points: 1, timerDuration: 10, question: "What is the powerhouse of the cell?", options: ["Nucleus", "Mitochondria", "Ribosome", "Golgi Body"], correct: 1, qType: "mcq" },
+      { round: "Round 1", points: 1, timerDuration: 10, question: "What element does 'O' represent on the periodic table?", options: ["Osmium", "Oxygen", "Gold", "Olive"], correct: 1, qType: "mcq" }
+    ];
 
     window.addEventListener('DOMContentLoaded', () => {
-      playerUid = getOrCreateUid();
-      
-      if (roomFromUrl) {
-        localStorage.setItem('qb_room', roomFromUrl.toUpperCase());
-      }
+      document.getElementById('displayRoomCode').innerText = roomCode;
+      peer = new Peer(roomCode);
 
-      const savedRoom = roomFromUrl || localStorage.getItem('qb_room');
-      const savedName = localStorage.getItem('qb_name');
-      const savedSection = localStorage.getItem('qb_section') || '';
+      peer.on('open', (id) => {
+        console.log('Host Peer ID initialized:', id);
+      });
 
-      if (savedRoom) {
-        document.getElementById('roomInput').value = savedRoom.toUpperCase();
-      }
-
-      if (savedRoom && savedName && !isTerminated) {
-        roomCode = savedRoom.trim().toUpperCase();
-        playerName = savedName.trim();
-        playerSection = savedSection.trim();
-        fullPlayerIdentifier = playerSection ? `${playerName} (${playerSection})` : playerName;
-
-        document.getElementById('joinScreen').style.display = 'none';
-        document.getElementById('waitingScreen').style.display = 'block';
-        document.getElementById('waitingStatus').innerText = "Connecting to Host... 🔄";
-        connectToHost();
-      }
-    });
-
-    function joinGame() {
-      isTerminated = false;
-      roomCode = document.getElementById('roomInput').value.trim().toUpperCase();
-      playerName = document.getElementById('username').value.trim();
-      playerSection = document.getElementById('sectionInput').value.trim();
-
-      if (!roomCode || !playerName) {
-        return alert('Please enter both Room Code and your Name!');
-      }
-
-      localStorage.setItem('qb_room', roomCode);
-      localStorage.setItem('qb_name', playerName);
-      localStorage.setItem('qb_section', playerSection);
-
-      fullPlayerIdentifier = playerSection ? `${playerName} (${playerSection})` : playerName;
-      connectToHost();
-    }
-
-    function connectToHost() {
-      if (isTerminated) return;
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      if (conn) { try { conn.close(); } catch(e){} }
-      if (peer) { try { peer.destroy(); } catch(e){} }
-
-      peer = new Peer();
-
-      peer.on('open', () => {
-        conn = peer.connect(roomCode, { reliable: true });
-
-        conn.on('open', () => {
-          conn.send({ 
-            type: 'join', 
-            name: playerName, 
-            section: playerSection,
-            uid: playerUid 
-          });
-          document.getElementById('joinScreen').style.display = 'none';
-          document.getElementById('waitingScreen').style.display = 'block';
-          document.getElementById('waitingStatus').innerText = "Connected! 🚀";
-        });
-
+      peer.on('connection', (conn) => {
         conn.on('data', (data) => {
-          if (data.type === 'session_terminated') {
-            resetSessionState();
-            return;
-          }
-
-          if (data.type === 'question') {
-            // Immediately render incoming question with zero delay
-            document.getElementById('waitingScreen').style.display = 'none';
-            document.getElementById('scoreScreen').style.display = 'none';
-            document.getElementById('endScreen').style.display = 'none';
-            document.getElementById('questionScreen').style.display = 'block';
-            renderQuestion(data);
-          } else if (data.type === 'tick') {
-            if (data.qIndex === undefined || data.qIndex === currentQuestionIndex) {
-              updatePlayerTimerUI(data.time);
+          if (data.type === 'join') {
+            connections[data.uid] = conn;
+            let existing = players.find(p => p.uid === data.uid);
+            if (!existing) {
+              const fullIdentifier = data.section ? `${data.name} (${data.section})` : data.name;
+              players.push({ uid: data.uid, name: fullIdentifier, score: 0, currentAnswer: null });
             }
-          } else if (data.type === 'timeOut') {
-            if (data.qIndex === undefined || data.qIndex === currentQuestionIndex) {
-              isTimeUp = true;
-              updatePlayerTimerUI(0);
-              document.getElementById('playerTimesUp').style.display = 'block';
-              disableOptions();
-            }
-          } else if (data.type === 'scoreboard') {
-            isTimeUp = true;
-            document.getElementById('questionScreen').style.display = 'none';
-            document.getElementById('endScreen').style.display = 'none';
-            document.getElementById('scoreScreen').style.display = 'block';
-            
-            const feedbackDiv = document.getElementById('answerFeedback');
-            if (data.isCorrect) {
-              feedbackDiv.className = 'result-correct';
-              feedbackDiv.innerHTML = '✅ CORRECT!';
-            } else {
-              feedbackDiv.className = 'result-wrong';
-              feedbackDiv.innerHTML = `❌ INCORRECT<br><small style="font-size: 14px; font-weight: normal;">Correct Answer: ${data.correctAnswerText}</small>`;
-            }
-
-            const me = data.leaderboard.find(p => p.name === fullPlayerIdentifier);
-            if (me) {
-              document.getElementById('myScoreText').innerText = `Your Total Score: ${me.score} pts`;
-            }
-
-            document.getElementById('playerLeaderboardView').innerHTML = data.leaderboard.map((p, index) => {
-              const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-              const isMe = p.name === fullPlayerIdentifier ? 'style="border: 2px solid #61dafb;"' : '';
-              return `<li ${isMe}><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
-            }).join('');
-          } else if (data.type === 'end') {
-            document.getElementById('questionScreen').style.display = 'none';
-            document.getElementById('scoreScreen').style.display = 'none';
-            document.getElementById('waitingScreen').style.display = 'none';
-            document.getElementById('endScreen').style.display = 'block';
-
-            showFinalPlacement(data.leaderboard);
-          }
-        });
-
-        conn.on('close', () => {
-          if (!isTerminated) {
-            document.getElementById('waitingStatus').innerText = "Reconnecting to Host... 🔄";
-            reconnectTimer = setTimeout(connectToHost, 2000);
-          }
-        });
-
-        conn.on('error', () => {
-          if (!isTerminated) {
-            document.getElementById('waitingStatus').innerText = "Retrying Connection... 🔄";
-            reconnectTimer = setTimeout(connectToHost, 2000);
+            updateLobbyUI();
+          } else if (data.type === 'answer') {
+            let p = players.find(item => item.uid === conn.peer || connections[item.uid] === conn);
+            if (p) { p.currentAnswer = data.option; }
           }
         });
       });
-
-      peer.on('error', () => {
-        if (!isTerminated) {
-          document.getElementById('waitingStatus').innerText = "Reconnecting to Host... 🔄";
-          reconnectTimer = setTimeout(connectToHost, 2000);
-        }
-      });
-    }
-
-    function triggerConfetti() {
-      if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      }
-    }
-
-    function showFinalPlacement(leaderboard) {
-      const myRankIndex = leaderboard.findIndex(p => p.name === fullPlayerIdentifier);
-      const myScore = leaderboard[myRankIndex] ? leaderboard[myRankIndex].score : 0;
-      const banner = document.getElementById('placementBanner');
-
-      document.getElementById('finalScoreText').innerText = `Final Score: ${myScore} pts`;
-
-      if (myRankIndex === 0) {
-        banner.className = 'place-1st';
-        banner.innerHTML = '🥇 CONGRATULATIONS!<br>YOU PLACED 1ST PLACE! 🏆';
-        triggerConfetti();
-      } else if (myRankIndex === 1) {
-        banner.className = 'place-2nd';
-        banner.innerHTML = '🥈 CONGRATULATIONS!<br>YOU PLACED 2ND PLACE! 🎉';
-      } else if (myRankIndex === 2) {
-        banner.className = 'place-3rd';
-        banner.innerHTML = '🥉 CONGRATULATIONS!<br>YOU PLACED 3RD PLACE! 🎉';
-      } else {
-        banner.className = 'place-other';
-        banner.innerHTML = `👏 Great Effort!<br>You finished ${myRankIndex + 1}${getOrdinal(myRankIndex + 1)} Place. Thank you for participating!`;
-      }
-
-      document.getElementById('finalLeaderboardView').innerHTML = leaderboard.map((p, index) => {
-        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-        const isMe = p.name === fullPlayerIdentifier ? 'style="border: 2px solid #61dafb;"' : '';
-        return `<li ${isMe}><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
-      }).join('');
-    }
-
-    function getOrdinal(n) {
-      const s = ["th", "st", "nd", "rd"];
-      const v = n % 100;
-      return s[(v - 20) % 10] || s[v] || s[0];
-    }
-
-    function updatePlayerTimerUI(seconds) {
-      document.getElementById('playerTimer').innerText = seconds;
-      const bar = document.getElementById('playerTimerBar');
-      const percentage = (seconds / currentMaxTimer) * 100;
-      bar.style.width = percentage + "%";
-
-      if (seconds <= 3) {
-        bar.style.backgroundColor = "#dc3545";
-      } else if (seconds <= 5) {
-        bar.style.backgroundColor = "#fd7e14";
-      } else {
-        bar.style.backgroundColor = "#28a745";
-      }
-    }
-
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && playerName && roomCode && !isTerminated) {
-        if (!conn || !conn.open) {
-          connectToHost();
-        }
-      }
     });
 
-    function renderQuestion(data) {
-      isTimeUp = false;
-      document.getElementById('playerTimesUp').style.display = 'none';
-      currentQuestionIndex = data.qIndex;
-
-      currentMaxTimer = data.timerDuration || 10;
-      const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
-      updatePlayerTimerUI(startSeconds);
-
-      if (data.qRoundIndex && data.qRoundTotal) {
-        document.getElementById('playerQCounter').innerText = `${data.qRoundName || 'Question'}: ${data.qRoundIndex} of ${data.qRoundTotal}`;
-      } else {
-        document.getElementById('playerQCounter').innerText = '';
-      }
-
-      const infoBar = document.getElementById('roundInfo');
-      infoBar.innerText = `${data.round.toUpperCase()} • ${data.points} PT${data.points > 1 ? 'S' : ''}`;
-      infoBar.className = data.round.includes("Clincher") ? "info-bar clincher-bar" : "info-bar";
-
-      document.getElementById('qText').innerText = data.question;
-      
-      const container = document.getElementById('optionsContainer');
-      container.innerHTML = '';
-
-      if (data.qType === 'text') {
-        const textInput = document.createElement('input');
-        textInput.type = 'text';
-        textInput.className = 'text-input-field';
-        textInput.placeholder = 'Type your answer...';
-        textInput.id = 'typedAnswerBox';
-        textInput.disabled = false;
-        textInput.removeAttribute('disabled');
-
-        textInput.oninput = () => {
-          if (isTimeUp) return;
-          conn.send({ type: 'answer', option: textInput.value });
-        };
-
-        container.appendChild(textInput);
-      } else {
-        const letters = ['A', 'B', 'C', 'D'];
-        data.options.forEach((opt, idx) => {
-          const btn = document.createElement('button');
-          btn.className = 'btn';
-          btn.innerText = `${letters[idx]}. ${opt}`;
-          btn.disabled = false;
-          btn.removeAttribute('disabled');
-          
-          btn.onclick = () => {
-            if (isTimeUp) return;
-
-            document.querySelectorAll('#optionsContainer .btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-
-            conn.send({ type: 'answer', option: idx });
-          };
-          container.appendChild(btn);
-        });
-      }
-
-      if (startSeconds <= 0) {
-        isTimeUp = true;
-        document.getElementById('playerTimesUp').style.display = 'block';
-        disableOptions();
-      }
+    function updateLobbyUI() {
+      document.getElementById('playerCount').innerText = players.length;
+      document.getElementById('playerList').innerHTML = players.map(p => `<li>${p.name}</li>`).join('');
     }
 
-    function disableOptions() {
-      document.querySelectorAll('#optionsContainer .btn').forEach(b => {
-        b.disabled = true;
-        b.setAttribute('disabled', 'true');
+    function broadcast(data) {
+      Object.values(connections).forEach(conn => {
+        if (conn && conn.open) conn.send(data);
       });
-      const textInput = document.getElementById('typedAnswerBox');
-      if (textInput) {
-        textInput.disabled = true;
-        textInput.setAttribute('disabled', 'true');
-      }
+    }
+
+    function startQuiz() {
+      if (players.length === 0) return alert('Wait for at least 1 player to join!');
+      currentQIndex = 0;
+      loadQuestion(currentQIndex);
+    }
+
+    function loadQuestion(index) {
+      if (index >= quizData.length) return finishQuiz();
+
+      const q = quizData[index];
+      players.forEach(p => p.currentAnswer = null);
+
+      document.getElementById('lobbyScreen').style.display = 'none';
+      document.getElementById('hostScoreScreen').style.display = 'none';
+      document.getElementById('hostQuestionScreen').style.display = 'block';
+
+      document.getElementById('hostQCounter').innerText = `Question ${index + 1} of ${quizData.length}`;
+      document.getElementById('hostQText').innerText = q.question;
+      document.getElementById('hostOptions').innerHTML = q.options.map((opt, i) => `<div class="opt-box">${String.fromCharCode(65+i)}. ${opt}</div>`).join('');
+
+      timeLeft = q.timerDuration;
+      document.getElementById('hostTimer').innerText = timeLeft;
+
+      // Send question instantly to all players
+      broadcast({
+        type: 'question',
+        qIndex: index,
+        round: q.round,
+        points: q.points,
+        question: q.question,
+        options: q.options,
+        qType: q.qType,
+        timerDuration: q.timerDuration
+      });
+
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('hostTimer').innerText = timeLeft;
+        broadcast({ type: 'tick', time: timeLeft, qIndex: index });
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          evaluateAnswers();
+        }
+      }, 1000);
+    }
+
+    function endQuestionEarly() {
+      if (timerInterval) clearInterval(timerInterval);
+      evaluateAnswers();
+    }
+
+    function evaluateAnswers() {
+      const q = quizData[currentQIndex];
+      players.forEach(p => {
+        if (p.currentAnswer === q.correct) {
+          p.score += q.points;
+        }
+      });
+
+      players.sort((a, b) => b.score - a.score);
+
+      broadcast({
+        type: 'scoreboard',
+        leaderboard: players.map(p => ({ name: p.name, score: p.score })),
+        correctAnswerText: q.options[q.correct]
+      });
+
+      document.getElementById('hostQuestionScreen').style.display = 'none';
+      document.getElementById('hostScoreScreen').style.display = 'block';
+      document.getElementById('hostLeaderboard').innerHTML = players.map((p, i) => `<li><span>${i+1}. ${p.name}</span> <span>${p.score} pts</span></li>`).join('');
+    }
+
+    function nextQuestion() {
+      currentQIndex++;
+      loadQuestion(currentQIndex);
+    }
+
+    function finishQuiz() {
+      broadcast({
+        type: 'end',
+        leaderboard: players.map(p => ({ name: p.name, score: p.score }))
+      });
+      alert('Quiz Finished!');
     }
   </script>
 </body>
