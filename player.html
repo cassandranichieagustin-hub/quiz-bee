@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #282c34; color: white; margin: 0; padding: 20px; }
-    .card { background: #3b4049; max-width: 400px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .card { background: #3b4049; max-width: 420px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     input[type="text"] { width: 85%; padding: 12px; margin-bottom: 12px; border-radius: 6px; border: none; font-size: 16px; text-align: center; }
     .section-field { display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; margin-bottom: 12px; }
     .section-field input { width: 140px; margin: 0 0 0 8px; padding: 8px; border-bottom: 2px solid #61dafb; border-radius: 0; background: transparent; color: white; font-weight: bold; }
@@ -31,8 +31,36 @@
     .progress-bar-bg { background: #20232a; height: 12px; border-radius: 10px; overflow: hidden; width: 100%; }
     .progress-bar-fill { background: #28a745; height: 100%; width: 100%; transition: width 0.3s linear, background-color 0.3s ease; }
     
-    .result-correct { background: #28a745; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
-    .result-wrong { background: #dc3545; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
+    .result-status-banner { padding: 12px; border-radius: 8px; font-size: 22px; font-weight: 900; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+    .result-correct-bg { background: #28a745; color: white; }
+    .result-wrong-bg { background: #dc3545; color: white; }
+
+    /* Results options display */
+    .result-option {
+      background: #20232a;
+      color: #fff;
+      padding: 12px 15px;
+      margin: 8px 0;
+      border-radius: 8px;
+      text-align: left;
+      font-size: 16px;
+      font-weight: bold;
+      border: 2px solid transparent;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .result-option.opt-correct {
+      background: #1e4620 !important;
+      border-color: #28a745 !important;
+      color: #72e077 !important;
+    }
+    .result-option.opt-wrong {
+      background: #4a191b !important;
+      border-color: #dc3545 !important;
+      color: #ff7b88 !important;
+    }
+
     #qText { font-size: 20px; margin: 15px 0; color: #fff; line-height: 1.4; }
     
     .text-input-field { background: #fff; color: #333; font-size: 18px; font-weight: bold; padding: 14px; border-radius: 8px; width: 90%; border: none; margin-bottom: 10px; pointer-events: auto !important; }
@@ -97,8 +125,13 @@
 
   <!-- SCOREBOARD WAIT & RESULT FEEDBACK SCREEN -->
   <div class="card" id="scoreScreen" style="display:none;">
-    <div id="answerFeedback"></div>
-    <h3 id="myScoreText" style="color: #61dafb; font-size: 24px; margin-bottom: 5px;">Your Score: 0 pts</h3>
+    <div id="resultStatus" class="result-status-banner"></div>
+    <h4 id="resultQuestionText" style="margin: 10px 0; color: #e0e0e0; font-size: 16px;"></h4>
+    
+    <!-- Render options breakdown here -->
+    <div id="resultOptionsContainer" style="margin-bottom: 20px;"></div>
+
+    <h3 id="myScoreText" style="color: #61dafb; font-size: 22px; margin-bottom: 5px; border-top: 1px solid #555; padding-top: 15px;">Your Score: 0 pts</h3>
     
     <h4 style="margin: 15px 0 5px 0; text-align: left; color: #aaa;">📊 Current Leaderboard</h4>
     <ul class="leaderboard-list" id="playerLeaderboardView"></ul>
@@ -127,7 +160,11 @@
     let reconnectTimer = null;
     let isTerminated = false;
     let currentMaxTimer = 10;
-    let currentActiveQuestionIndex = -1; // Strict Question Tracking
+    let currentActiveQuestionIndex = -1;
+
+    // Cache current question state locally for detailed result rendering
+    let currentQuestionData = null;
+    let mySelectedAnswer = null;
 
     function getOrCreateUid() {
       let uid = localStorage.getItem('qb_uid');
@@ -226,7 +263,6 @@
           document.getElementById('waitingStatus').innerText = "Connected! 🚀";
         });
 
-        // Wipes previous listener stack to prevent duplicate event handling
         conn.off('data');
 
         conn.on('data', (data) => {
@@ -236,8 +272,9 @@
           }
 
           if (data.type === 'question') {
-            // Unlocks interface completely for the incoming question
             currentActiveQuestionIndex = data.qIndex;
+            currentQuestionData = data;
+            mySelectedAnswer = null; // Clear previous answer state
             isTimeUp = false;
             
             document.getElementById('waitingScreen').style.display = 'none';
@@ -247,12 +284,10 @@
             
             renderQuestion(data);
           } else if (data.type === 'tick') {
-            // IGNORE tick if it belongs to an old or mismatched question
             if (data.qIndex === currentActiveQuestionIndex) {
               updatePlayerTimerUI(data.time);
             }
           } else if (data.type === 'timeOut') {
-            // IGNORE timeOut if it belongs to an old or mismatched question
             if (data.qIndex === currentActiveQuestionIndex) {
               isTimeUp = true;
               updatePlayerTimerUI(0);
@@ -265,25 +300,7 @@
             document.getElementById('endScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'block';
             
-            const feedbackDiv = document.getElementById('answerFeedback');
-            if (data.isCorrect) {
-              feedbackDiv.className = 'result-correct';
-              feedbackDiv.innerHTML = '✅ CORRECT!';
-            } else {
-              feedbackDiv.className = 'result-wrong';
-              feedbackDiv.innerHTML = `❌ INCORRECT<br><small style="font-size: 14px; font-weight: normal;">Correct Answer: ${data.correctAnswerText}</small>`;
-            }
-
-            const me = data.leaderboard.find(p => p.name === fullPlayerIdentifier);
-            if (me) {
-              document.getElementById('myScoreText').innerText = `Your Total Score: ${me.score} pts`;
-            }
-
-            document.getElementById('playerLeaderboardView').innerHTML = data.leaderboard.map((p, index) => {
-              const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-              const isMe = p.name === fullPlayerIdentifier ? 'style="border: 2px solid #61dafb;"' : '';
-              return `<li ${isMe}><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
-            }).join('');
+            renderDetailedResult(data);
           } else if (data.type === 'end') {
             document.getElementById('questionScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'none';
@@ -325,6 +342,80 @@
           origin: { y: 0.6 }
         });
       }
+    }
+
+    function renderDetailedResult(data) {
+      const statusBanner = document.getElementById('resultStatus');
+      const questionTextElem = document.getElementById('resultQuestionText');
+      const optionsContainer = document.getElementById('resultOptionsContainer');
+
+      if (data.isCorrect) {
+        statusBanner.className = 'result-status-banner result-correct-bg';
+        statusBanner.innerHTML = '✅ CORRECT!';
+      } else {
+        statusBanner.className = 'result-status-banner result-wrong-bg';
+        statusBanner.innerHTML = '❌ INCORRECT';
+      }
+
+      if (currentQuestionData) {
+        questionTextElem.innerText = `Q: ${currentQuestionData.question}`;
+      } else {
+        questionTextElem.innerText = '';
+      }
+
+      optionsContainer.innerHTML = '';
+
+      // Detailed Multiple Choice options breakdown
+      if (currentQuestionData && currentQuestionData.qType !== 'text' && currentQuestionData.options) {
+        const letters = ['A', 'B', 'C', 'D'];
+        currentQuestionData.options.forEach((optText, idx) => {
+          const optDiv = document.createElement('div');
+          let classList = 'result-option';
+          let badgeText = '';
+
+          // Determine if this is user's answer or correct answer
+          const isUserChoice = (mySelectedAnswer === idx);
+          
+          // Match index to host's correct display
+          const isCorrectChoice = data.correctAnswerText && data.correctAnswerText.startsWith(`${letters[idx]}.`);
+
+          if (isCorrectChoice) {
+            classList += ' opt-correct';
+            badgeText = isUserChoice ? '✅ Your Choice (Correct)' : '✅ Correct Answer';
+          } else if (isUserChoice) {
+            classList += ' opt-wrong';
+            badgeText = '❌ Your Choice';
+          }
+
+          optDiv.className = classList;
+          optDiv.innerHTML = `<span><b>${letters[idx]}.</b> ${optText}</span><small style="font-size:12px; font-weight:bold;">${badgeText}</small>`;
+          optionsContainer.appendChild(optDiv);
+        });
+      } else {
+        // Identification / Text input result breakdown
+        const givenText = (mySelectedAnswer !== null && mySelectedAnswer !== undefined) ? mySelectedAnswer : '<i>No answer</i>';
+        optionsContainer.innerHTML = `
+          <div class="result-option opt-wrong" style="margin-bottom:6px;">
+            <span>Your Answer: <b>${givenText}</b></span>
+          </div>
+          <div class="result-option opt-correct">
+            <span>Correct Answer: <b>${data.correctAnswerText}</b></span>
+          </div>
+        `;
+      }
+
+      // Update total score
+      const me = data.leaderboard.find(p => p.name === fullPlayerIdentifier);
+      if (me) {
+        document.getElementById('myScoreText').innerText = `Your Total Score: ${me.score} pts`;
+      }
+
+      // Leaderboard view
+      document.getElementById('playerLeaderboardView').innerHTML = data.leaderboard.map((p, index) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+        const isMe = p.name === fullPlayerIdentifier ? 'style="border: 2px solid #61dafb;"' : '';
+        return `<li ${isMe}><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
+      }).join('');
     }
 
     function showFinalPlacement(leaderboard) {
@@ -386,7 +477,6 @@
     });
 
     function renderQuestion(data) {
-      // FORCE CLEAR "TIME'S UP!" BANNER AND LOCKS
       isTimeUp = false;
       document.getElementById('playerTimesUp').style.display = 'none';
 
@@ -406,7 +496,6 @@
 
       document.getElementById('qText').innerText = data.question;
       
-      // Complete DOM rebuild for buttons
       const container = document.getElementById('optionsContainer');
       container.innerHTML = '';
 
@@ -421,6 +510,7 @@
 
         textInput.oninput = () => {
           if (isTimeUp) return;
+          mySelectedAnswer = textInput.value;
           conn.send({ type: 'answer', option: textInput.value });
         };
 
@@ -440,6 +530,7 @@
             document.querySelectorAll('#optionsContainer .btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
 
+            mySelectedAnswer = idx; // Cache user choice
             conn.send({ type: 'answer', option: idx });
           };
           container.appendChild(btn);
