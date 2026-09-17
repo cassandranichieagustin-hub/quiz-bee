@@ -371,8 +371,9 @@
     });
 
     function showQuestion(data) {
-      // CLEAR & RESET STATE FOR EVERY NEW QUESTION
+      // FORCE RESET LOCK STATE FOR EVERY NEW QUESTION
       isTimeUp = false;
+      document.getElementById('playerTimesUp').style.display = 'none';
       currentQuestionIndex = data.qIndex;
 
       currentMaxTimer = data.timerDuration || 10;
@@ -399,7 +400,7 @@
         textInput.className = 'text-input-field';
         textInput.placeholder = 'Type your answer...';
         textInput.id = 'typedAnswerBox';
-        textInput.disabled = false;
+        textInput.disabled = false; // Ensure enabled
 
         textInput.oninput = () => {
           if (isTimeUp) return;
@@ -413,7 +414,7 @@
           const btn = document.createElement('button');
           btn.className = 'btn';
           btn.innerText = `${letters[idx]}. ${opt}`;
-          btn.disabled = false;
+          btn.disabled = false; // Ensure enabled
           
           btn.onclick = () => {
             if (isTimeUp) return;
@@ -431,8 +432,6 @@
         isTimeUp = true;
         document.getElementById('playerTimesUp').style.display = 'block';
         disableOptions();
-      } else {
-        document.getElementById('playerTimesUp').style.display = 'none';
       }
     }
 
