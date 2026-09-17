@@ -116,6 +116,7 @@
     let playerUid = '';
     let roomCode = '';
     let isTimeUp = false;
+    let reconnectTimer = null;
 
     function getOrCreateUid() {
       let uid = localStorage.getItem('qb_uid');
@@ -167,14 +168,16 @@
     }
 
     function connectToHost() {
-      if (peer) peer.destroy();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (conn) { try { conn.close(); } catch(e){} }
+      if (peer) { try { peer.destroy(); } catch(e){} }
+
       peer = new Peer();
 
       peer.on('open', () => {
         conn = peer.connect(roomCode, { reliable: true });
 
         conn.on('open', () => {
-          // Send join payload immediately on connection open
           conn.send({ 
             type: 'join', 
             name: playerName, 
@@ -237,14 +240,19 @@
         });
 
         conn.on('close', () => {
-          document.getElementById('waitingStatus').innerText = "Reconnecting...";
-          setTimeout(connectToHost, 2000);
+          document.getElementById('waitingStatus').innerText = "Reconnecting to Host... 🔄";
+          reconnectTimer = setTimeout(connectToHost, 2000);
         });
 
         conn.on('error', () => {
-          document.getElementById('waitingStatus').innerText = "Connecting... (Check Room Code)";
-          setTimeout(connectToHost, 2000);
+          document.getElementById('waitingStatus').innerText = "Retrying Connection... 🔄";
+          reconnectTimer = setTimeout(connectToHost, 2000);
         });
+      });
+
+      peer.on('error', () => {
+        document.getElementById('waitingStatus').innerText = "Reconnecting to Host... 🔄";
+        reconnectTimer = setTimeout(connectToHost, 2000);
       });
     }
 
