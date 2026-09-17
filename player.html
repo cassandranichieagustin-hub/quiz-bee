@@ -8,7 +8,7 @@
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #282c34; color: white; margin: 0; padding: 20px; }
     .card { background: #3b4049; max-width: 400px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    input { width: 85%; padding: 12px; margin-bottom: 12px; border-radius: 6px; border: none; font-size: 16px; text-align: center; }
+    input[type="text"] { width: 85%; padding: 12px; margin-bottom: 12px; border-radius: 6px; border: none; font-size: 16px; text-align: center; }
     .section-field { display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; margin-bottom: 12px; }
     .section-field input { width: 140px; margin: 0 0 0 8px; padding: 8px; border-bottom: 2px solid #61dafb; border-radius: 0; background: transparent; color: white; font-weight: bold; }
     .btn { background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.2s ease; }
@@ -25,6 +25,8 @@
     .result-correct { background: #28a745; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
     .result-wrong { background: #dc3545; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
     #qText { font-size: 20px; margin: 15px 0; color: #fff; line-height: 1.4; }
+    
+    .text-input-field { background: #fff; color: #333; font-size: 18px; font-weight: bold; padding: 14px; border-radius: 8px; width: 90%; border: none; margin-bottom: 10px; }
     
     .times-up-banner {
       display: none;
@@ -76,7 +78,7 @@
     <div class="info-bar" id="roundInfo">Round 1</div>
     
     <div class="timer-container">
-      <div class="timer-badge">⏱️ Time Left: <span id="playerTimer">20</span>s</div>
+      <div class="timer-badge">⏱️ Time Left: <span id="playerTimer">10</span>s</div>
       <div class="progress-bar-bg">
         <div class="progress-bar-fill" id="playerTimerBar"></div>
       </div>
@@ -118,6 +120,7 @@
     let isTimeUp = false;
     let reconnectTimer = null;
     let isTerminated = false;
+    let currentMaxTimer = 10;
 
     function getOrCreateUid() {
       let uid = localStorage.getItem('qb_uid');
@@ -150,7 +153,6 @@
     window.addEventListener('DOMContentLoaded', () => {
       playerUid = getOrCreateUid();
       
-      // Scanned fresh QR code parameter overrides old local storage
       if (roomFromUrl) {
         localStorage.setItem('qb_room', roomFromUrl.toUpperCase());
       }
@@ -332,12 +334,12 @@
     function updatePlayerTimerUI(seconds) {
       document.getElementById('playerTimer').innerText = seconds;
       const bar = document.getElementById('playerTimerBar');
-      const percentage = (seconds / 20) * 100;
+      const percentage = (seconds / currentMaxTimer) * 100;
       bar.style.width = percentage + "%";
 
-      if (seconds <= 5) {
+      if (seconds <= 3) {
         bar.style.backgroundColor = "#dc3545";
-      } else if (seconds <= 10) {
+      } else if (seconds <= 5) {
         bar.style.backgroundColor = "#fd7e14";
       } else {
         bar.style.backgroundColor = "#28a745";
@@ -353,7 +355,8 @@
     });
 
     function showQuestion(data) {
-      const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : 20;
+      currentMaxTimer = data.timerDuration || 10;
+      const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
       updatePlayerTimerUI(startSeconds);
 
       const infoBar = document.getElementById('roundInfo');
@@ -364,23 +367,37 @@
       const container = document.getElementById('optionsContainer');
       container.innerHTML = '';
 
-      const letters = ['A', 'B', 'C', 'D'];
+      if (data.qType === 'text') {
+        const textInput = document.createElement('input');
+        textInput.type = 'text';
+        textInput.className = 'text-input-field';
+        textInput.placeholder = 'Type your answer...';
+        textInput.id = 'typedAnswerBox';
 
-      data.options.forEach((opt, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'btn';
-        btn.innerText = `${letters[idx]}. ${opt}`;
-        
-        btn.onclick = () => {
+        textInput.oninput = () => {
           if (isTimeUp) return;
-
-          document.querySelectorAll('#optionsContainer .btn').forEach(b => b.classList.remove('selected'));
-          btn.classList.add('selected');
-
-          conn.send({ type: 'answer', option: idx });
+          conn.send({ type: 'answer', option: textInput.value });
         };
-        container.appendChild(btn);
-      });
+
+        container.appendChild(textInput);
+      } else {
+        const letters = ['A', 'B', 'C', 'D'];
+        data.options.forEach((opt, idx) => {
+          const btn = document.createElement('button');
+          btn.className = 'btn';
+          btn.innerText = `${letters[idx]}. ${opt}`;
+          
+          btn.onclick = () => {
+            if (isTimeUp) return;
+
+            document.querySelectorAll('#optionsContainer .btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+
+            conn.send({ type: 'answer', option: idx });
+          };
+          container.appendChild(btn);
+        });
+      }
 
       if (startSeconds <= 0) {
         isTimeUp = true;
@@ -394,6 +411,8 @@
 
     function disableOptions() {
       document.querySelectorAll('#optionsContainer .btn').forEach(b => b.disabled = true);
+      const textInput = document.getElementById('typedAnswerBox');
+      if (textInput) textInput.disabled = true;
     }
   </script>
 </body>
