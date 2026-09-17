@@ -60,6 +60,7 @@
     <div class="room-code" id="roomCodeDisplay">INITIALIZING...</div>
     <br>
     <button onclick="nextStep()">Start Quiz Bee 🚀</button>
+    <button class="btn-secondary" onclick="resetSession()">New Session 🔄</button>
 
     <h3>Connected Players (<span id="playerCount">0</span>)</h3>
     <ul id="playerList"></ul>
@@ -98,8 +99,7 @@
   </div>
 
   <script>
-    const ROOM_CODE = "QUIZ" + Math.floor(1000 + Math.random() * 9000);
-    
+    let ROOM_CODE = "";
     const questions = [
       { round: "Easy Round", points: 1, question: "What is the capital of the Philippines?", options: ["Cebu", "Manila", "Davao", "Quezon City"], answer: 1 },
       { round: "Easy Round", points: 1, question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Saturn"], answer: 1 },
@@ -118,6 +118,7 @@
       { round: "Clincher Round", points: 10, question: "[CLINCHER] What is the longest river in the world?", options: ["Amazon River", "Nile River", "Yangtze River", "Mississippi River"], answer: 1 }
     ];
 
+    let peer = null;
     let currentQuestion = -1;
     let stepState = 'lobby'; 
     let players = {}; 
@@ -127,65 +128,93 @@
     let timerInterval = null;
     let timeLeft = 20;
 
-    const peer = new Peer(ROOM_CODE);
+    function initHostSession() {
+      // Terminate all existing connected devices if resetting
+      if (connections.length > 0) {
+        broadcast({ type: 'session_terminated' });
+        connections.forEach(conn => { try { conn.close(); } catch(e){} });
+      }
 
-    peer.on('open', (id) => {
-      document.getElementById('roomCodeDisplay').innerText = id;
-      const joinUrl = `https://cassandranichieagustin-hub.github.io/quiz-bee/player.html?room=${id}`;
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
-      document.getElementById("qrContainer").innerHTML = `<img src="${qrApiUrl}" width="200" height="200" alt="Join QR Code" />`;
-    });
+      if (peer) {
+        try { peer.destroy(); } catch(e){}
+      }
 
-    peer.on('connection', (conn) => {
-      // Remove any prior dead connection references for the same peer connection ID
-      connections = connections.filter(c => c.peer !== conn.peer);
-      connections.push(conn);
+      connections = [];
+      players = {};
+      playerAnswers = {};
+      currentQuestion = -1;
+      stepState = 'lobby';
+      updatePlayerLists();
 
-      conn.on('data', (data) => {
-        if (data.type === 'join') {
-          const formattedName = data.section ? `${data.name} (${data.section})` : data.name;
-          const uid = data.uid || formattedName; 
+      ROOM_CODE = "QUIZ" + Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('roomCodeDisplay').innerText = "INITIALIZING...";
+      document.getElementById("qrContainer").innerHTML = `<p><i>Connecting to Server...</i></p>`;
 
-          conn.playerUid = uid;
+      peer = new Peer(ROOM_CODE);
 
-          if (!players[uid]) {
-            players[uid] = { name: formattedName, score: 0, currentPeerId: conn.peer };
-          } else {
-            players[uid].name = formattedName;
-            players[uid].currentPeerId = conn.peer;
+      peer.on('open', (id) => {
+        document.getElementById('roomCodeDisplay').innerText = id;
+        const joinUrl = `https://cassandranichieagustin-hub.github.io/quiz-bee/player.html?room=${id}`;
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
+        document.getElementById("qrContainer").innerHTML = `<img src="${qrApiUrl}" width="200" height="200" alt="Join QR Code" />`;
+      });
+
+      peer.on('connection', (conn) => {
+        connections = connections.filter(c => c.peer !== conn.peer);
+        connections.push(conn);
+
+        conn.on('data', (data) => {
+          if (data.type === 'join') {
+            const formattedName = data.section ? `${data.name} (${data.section})` : data.name;
+            const uid = data.uid || formattedName; 
+
+            conn.playerUid = uid;
+
+            if (!players[uid]) {
+              players[uid] = { name: formattedName, score: 0, currentPeerId: conn.peer };
+            } else {
+              players[uid].name = formattedName;
+              players[uid].currentPeerId = conn.peer;
+            }
+
+            updatePlayerLists();
+
+            if (stepState === 'question' && currentQuestion >= 0) {
+              const q = questions[currentQuestion];
+              conn.send({
+                type: 'question',
+                question: q.question,
+                options: q.options,
+                points: q.points,
+                round: q.round,
+                currentTimeLeft: timeLeft
+              });
+            } else if (stepState === 'scoreboard') {
+              sendScoreboardToPlayer(conn);
+            }
+          } else if (data.type === 'answer') {
+            if (conn.playerUid) {
+              playerAnswers[conn.playerUid] = data.option;
+            }
           }
+        });
 
+        conn.on('close', () => {
+          connections = connections.filter(c => c !== conn);
           updatePlayerLists();
+        });
 
-          if (stepState === 'question' && currentQuestion >= 0) {
-            const q = questions[currentQuestion];
-            conn.send({
-              type: 'question',
-              question: q.question,
-              options: q.options,
-              points: q.points,
-              round: q.round,
-              currentTimeLeft: timeLeft
-            });
-          } else if (stepState === 'scoreboard') {
-            sendScoreboardToPlayer(conn);
-          }
-        } else if (data.type === 'answer') {
-          if (conn.playerUid) {
-            playerAnswers[conn.playerUid] = data.option;
-          }
-        }
+        conn.on('error', () => {
+          connections = connections.filter(c => c !== conn);
+        });
       });
+    }
 
-      conn.on('close', () => {
-        connections = connections.filter(c => c !== conn);
-        updatePlayerLists();
-      });
-
-      conn.on('error', () => {
-        connections = connections.filter(c => c !== conn);
-      });
-    });
+    function resetSession() {
+      if (confirm("Are you sure you want to start a NEW session? All connected devices will be disconnected.")) {
+        initHostSession();
+      }
+    }
 
     function broadcast(data) {
       connections.forEach(conn => {
@@ -386,6 +415,9 @@
       
       broadcast({ type: 'end', leaderboard: sorted });
     }
+
+    // Initialize session on load
+    window.addEventListener('DOMContentLoaded', initHostSession);
   </script>
 </body>
 </html>
