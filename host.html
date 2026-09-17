@@ -41,7 +41,15 @@
       border-radius: 8px;
       margin-top: 15px;
     }
-    .player-answers-box h4 { margin: 0 0 8px 0; color: #007bff; }
+    .player-answers-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .player-answers-header h4 { margin: 0; color: #007bff; }
+    .toggle-btn { background: #007bff; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; border: none; font-weight: bold; }
+
     .player-answer-tag { display: inline-block; background: #ffffff; padding: 4px 10px; border-radius: 15px; margin: 3px; font-size: 14px; font-weight: bold; border: 1px solid #b8daff; }
 
     .times-up-banner {
@@ -106,8 +114,13 @@
     <div class="options-display" id="optionsList"></div>
     
     <div class="player-answers-box">
-      <h4>💬 Live Answers Submitted (<span id="submittedCount">0</span>):</h4>
-      <div id="liveAnswersDisplay"><i>Waiting for player answers...</i></div>
+      <div class="player-answers-header" onclick="toggleAnswerPanel()">
+        <h4>💬 Live Answers Submitted (<span id="submittedCount">0</span>):</h4>
+        <button class="toggle-btn" id="panelToggleBtn">Hide Panel 🔼</button>
+      </div>
+      <div id="liveAnswersContent" style="margin-top: 10px;">
+        <div id="liveAnswersDisplay"><i>Waiting for player answers...</i></div>
+      </div>
     </div>
     
     <button id="qNextBtn" onclick="nextStep()">Show Leaderboard 📊</button>
@@ -275,6 +288,20 @@
     let inClincherMode = false;
     let timerInterval = null;
     let timeLeft = 10;
+    let isPanelOpen = true;
+
+    function toggleAnswerPanel() {
+      const content = document.getElementById('liveAnswersContent');
+      const btn = document.getElementById('panelToggleBtn');
+      isPanelOpen = !isPanelOpen;
+      if (isPanelOpen) {
+        content.style.display = 'block';
+        btn.innerText = 'Hide Panel 🔼';
+      } else {
+        content.style.display = 'none';
+        btn.innerText = 'Show Panel 🔽';
+      }
+    }
 
     function switchQuestionSet() {
       const selectedSet = document.getElementById('setSelect').value;
@@ -533,6 +560,7 @@
         qType: q.type || 'mc',
         points: q.points,
         round: q.round,
+        qIndex: currentQuestion,
         qRoundIndex: roundMeta.index,
         qRoundTotal: roundMeta.total,
         qRoundName: roundMeta.name,
