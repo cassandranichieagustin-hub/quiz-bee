@@ -3,189 +3,685 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quiz Bee - Host Dashboard</title>
+  <title>Quiz Bee Host</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #1e222b; color: white; margin: 0; padding: 20px; }
-    .card { background: #2c313c; max-width: 600px; margin: auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-    .btn { background: #61dafb; color: #1e222b; border: none; padding: 14px 20px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; margin: 10px 5px; transition: background 0.2s; }
-    .btn:hover { background: #4fa8d1; }
-    .btn-danger { background: #dc3545; color: white; }
-    .room-badge { font-size: 32px; font-weight: bold; color: #61dafb; letter-spacing: 2px; margin: 10px 0; }
-    .player-list, .leaderboard { list-style: none; padding: 0; text-align: left; max-height: 250px; overflow-y: auto; }
-    .player-list li, .leaderboard li { background: #20232a; margin: 6px 0; padding: 10px 14px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; }
-    .timer-display { font-size: 36px; font-weight: bold; color: #ff6b6b; margin: 15px 0; }
-    .q-title { font-size: 22px; margin: 15px 0; color: #fff; }
-    .opt-box { background: #3b4049; padding: 10px; margin: 6px 0; border-radius: 6px; text-align: left; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 20px; }
+    .card { background: white; max-width: 650px; margin: auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    #qrContainer { margin: 20px 0; min-height: 200px; display: flex; align-items: center; justify-content: center; }
+    #qrContainer img { border: 4px solid #007bff; border-radius: 8px; padding: 5px; }
+    button { background: #007bff; color: white; border: none; padding: 14px 28px; font-size: 18px; border-radius: 6px; cursor: pointer; margin-top: 15px; font-weight: bold; }
+    button:hover { background: #0056b3; }
+    .btn-secondary { background: #6c757d; margin-left: 10px; }
+    .badge { display: inline-block; padding: 6px 14px; border-radius: 20px; color: white; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; font-size: 14px; }
+    .easy { background: #28a745; }
+    .moderate { background: #fd7e14; }
+    .difficult { background: #dc3545; }
+    .clincher { background: #6f42c1; }
+    ul { list-style: none; padding: 0; }
+    li { background: #e9ecef; margin: 8px 0; padding: 12px 16px; border-radius: 6px; display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
+    .options-display { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .option-item { font-size: 18px; margin: 8px 0; font-weight: bold; color: #333; }
+    .alert-banner { background: #fff3cd; color: #856404; padding: 12px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; }
+    .room-code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #007bff; background: #e7f1ff; padding: 8px 20px; border-radius: 8px; display: inline-block; margin: 10px 0; }
+    
+    .timer-container { margin: 15px 0; }
+    .timer-box { font-size: 32px; font-weight: bold; color: #dc3545; margin-bottom: 8px; }
+    .progress-bar-bg { background: #e9ecef; height: 16px; border-radius: 10px; overflow: hidden; width: 100%; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); }
+    .progress-bar-fill { background: #28a745; height: 100%; width: 100%; transition: width 1s linear, background-color 0.5s ease; }
+    
+    .set-select { padding: 10px; font-size: 16px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; border: 2px solid #007bff; }
+
+    .player-answers-box { text-align: left; background: #e7f1ff; border: 2px solid #007bff; padding: 12px; border-radius: 8px; margin-top: 15px; }
+    .player-answers-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .player-answers-header h4 { margin: 0; color: #007bff; }
+    .toggle-btn { background: #007bff; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; border: none; font-weight: bold; }
+    .player-answer-tag { display: inline-block; background: #ffffff; padding: 4px 10px; border-radius: 15px; margin: 3px; font-size: 14px; font-weight: bold; border: 1px solid #b8daff; }
+
+    .times-up-banner {
+      display: none; font-size: 28px; font-weight: 900; color: #ff2a2a; letter-spacing: 3px; margin: 10px 0;
+      animation: pulse 0.8s infinite alternate;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.8; text-shadow: 0 0 5px rgba(255, 42, 42, 0.4); }
+      100% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 20px rgba(255, 42, 42, 0.9); }
+    }
   </style>
 </head>
 <body>
 
   <!-- LOBBY SCREEN -->
-  <div class="card" id="lobbyScreen">
-    <h2>Quiz Bee Host Dashboard</h2>
-    <p>Room Code:</p>
-    <div class="room-badge" id="displayRoomCode">GENERATING...</div>
+  <div class="card" id="lobby">
+    <h1>🏆 Quiz Bee Host</h1>
+    
+    <label for="setSelect" style="font-weight: bold; font-size: 18px;">Select Question Set:</label><br>
+    <select id="setSelect" class="set-select" onchange="switchQuestionSet()">
+      <option value="1">Set 1</option>
+      <option value="2">Set 2</option>
+      <option value="3">Set 3</option>
+    </select>
+
+    <p>Scan the QR Code using your mobile device to join:</p>
+    
+    <div id="qrContainer">
+      <p><i>Connecting to Server...</i></p>
+    </div>
+
+    <p style="margin-bottom: 5px;">ROOM CODE:</p>
+    <div class="room-code" id="roomCodeDisplay">INITIALIZING...</div>
+    <br>
+    <button onclick="nextStep()">Start Quiz Bee 🚀</button>
+    <button class="btn-secondary" onclick="resetSession()">New Session 🔄</button>
+
     <h3>Connected Players (<span id="playerCount">0</span>)</h3>
-    <ul class="player-list" id="playerList"></ul>
-    <button class="btn" onclick="startQuiz()">🚀 Start Quiz</button>
+    <ul id="playerList"></ul>
   </div>
 
-  <!-- QUESTION CONTROL SCREEN -->
-  <div class="card" id="hostQuestionScreen" style="display:none;">
-    <div style="color: #61dafb; font-weight: bold;" id="hostQCounter">Question 1</div>
-    <div class="timer-display">⏱️ <span id="hostTimer">10</span>s</div>
-    <h3 class="q-title" id="hostQText">Question text goes here...</h3>
-    <div id="hostOptions"></div>
-    <br>
-    <button class="btn btn-danger" onclick="endQuestionEarly()">🛑 Stop Timer</button>
+  <!-- QUESTION SCREEN -->
+  <div class="card" id="questionArea" style="display:none;">
+    <div><span class="badge" id="roundBadge">Round</span></div>
+    
+    <div class="timer-container">
+      <div class="timer-box">⏱️ <span id="timerDisplay">10</span>s</div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="hostTimerBar"></div>
+      </div>
+    </div>
+
+    <div class="times-up-banner" id="hostTimesUp">🚨 TIME'S UP! 🚨</div>
+    <h3 id="qNumber" style="margin: 5px 0; color: #666;">Question 1</h3>
+    <h1 id="qText" style="margin: 15px 0;">Question goes here...</h1>
+    
+    <div class="options-display" id="optionsList"></div>
+    
+    <div class="player-answers-box">
+      <div class="player-answers-header" onclick="toggleAnswerPanel()">
+        <h4>💬 Live Answers Submitted (<span id="submittedCount">0</span>):</h4>
+        <button class="toggle-btn" id="panelToggleBtn">Hide Panel 🔼</button>
+      </div>
+      <div id="liveAnswersContent" style="margin-top: 10px;">
+        <div id="liveAnswersDisplay"><i>Waiting for player answers...</i></div>
+      </div>
+    </div>
+    
+    <button id="qNextBtn" onclick="nextStep()">Show Leaderboard 📊</button>
   </div>
 
   <!-- SCOREBOARD SCREEN -->
-  <div class="card" id="hostScoreScreen" style="display:none;">
-    <h2>📊 Current Leaderboard</h2>
-    <ul class="leaderboard" id="hostLeaderboard"></ul>
-    <button class="btn" onclick="nextQuestion()">➡️ Next Question</button>
+  <div class="card" id="scoreboardArea" style="display:none;">
+    <div id="tieAlert" class="alert-banner" style="display:none;">⚠️ TIE DETECTED FOR 1ST PLACE! Clincher Round Initiated.</div>
+    <h1 id="scoreboardTitle">📊 Current Standings</h1>
+    <ul id="roundScoreboard"></ul>
+    
+    <div>
+      <button id="nextBtn" onclick="nextStep()">Next Question ➔</button>
+      <button id="manualClincherBtn" class="btn-secondary" style="display:none;" onclick="startClincherManually()">Force Clincher Round ⚡</button>
+    </div>
   </div>
 
   <script>
+    let ROOM_CODE = "";
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function prepareShuffledSet(rawSet) {
+      const easy = shuffleArray(rawSet.filter(q => q.round === "Easy Round"));
+      const moderate = shuffleArray(rawSet.filter(q => q.round === "Moderate Round"));
+      const difficult = shuffleArray(rawSet.filter(q => q.round === "Difficult Round"));
+      const clincher = shuffleArray(rawSet.filter(q => q.round === "Clincher Round"));
+      return [...easy, ...moderate, ...difficult, ...clincher];
+    }
+    
+    const rawQuestionBank = {
+      1: [
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which quantity describes rotational motion rather than translational motion?", options: ["Linear velocity", "Angular velocity", "Displacement", "Acceleration"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which condition poses an electrical hazard caused by connecting too many appliances to one outlet?", options: ["Damaged insulation", "Faulty wiring", "Overloading", "Electrocution"], answer: 2 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which scientist merged chemistry and biology to discover heat treatment prevents microbial growth?", options: ["Antoine Lavoisier", "Louis Pasteur", "Dmitri Mendeleev", "Robert Boyle"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What is the primary physical principle behind hydraulic lifts?", options: ["Archimedes' Principle", "Pascal's Principle", "Bernoulli's Principle", "Newton's First Law"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What active ingredient is commonly found in household liquid bleach?", options: ["Sodium chloride", "Sodium hypochlorite", "Acetic acid", "Calcium carbonate"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What modern lighting technology is known for minimal energy wastage?", options: ["Incandescent bulb", "Fluorescent tube", "LED bulb", "Halogen lamp"], answer: 2 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which simple machine consists of a rigid bar pivoting on a fulcrum?", options: ["Pulley", "Lever", "Wedge", "Screw"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "An object floats in a fluid if its overall average density is what compared to the fluid?", options: ["Greater than the fluid", "Equal to the fluid", "Less than the fluid", "Double the fluid"], answer: 2 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which wave property of sound is primarily utilized in medical ultrasound imaging?", options: ["Refraction", "Reflection", "Diffraction", "Absorption"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which Philippine government agency regulates personal care cosmetics and drugs?", options: ["DTI", "DENR", "FDA", "DOST"], answer: 2 },
+        
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "When a dancer executes a pirouette, pulling their arms closer to the body increases spin speed due to what?", options: ["Linear momentum increase", "Conservation of angular momentum", "Decrease in total torque", "Increase in rotational inertia"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why is dampness near electrical appliances considered extremely dangerous?", options: ["Water reduces voltage", "Water decreases electrical resistance of human skin", "Water increases wire resistance", "Water drains battery charge"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "What chemical component in laundry detergent reduces water surface tension to lift grease?", options: ["Surfactant", "Builder", "Bleaching agent", "Enzyme"], answer: 0 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "How does a compound machine differ from a simple machine?", options: ["It generates its own energy", "It combines two or more simple machines", "It operates without friction", "It requires electrical power"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Soundproof studio walls utilize porous, soft materials primarily to accomplish what?", options: ["Reflect sound waves", "Amplify sound waves", "Absorb sound wave energy", "Diffract sound waves"], answer: 2 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "According to Pascal's Principle, pushing a small piston produces a larger force on a larger piston because what stays constant?", options: ["Fluid volume", "Fluid pressure", "Fluid speed", "Mechanical work"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Louis Pasteur's research disputed spontaneous generation and established which biological theory?", options: ["Cell theory", "Germ theory of disease", "Gene theory", "Atomic theory"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "An ergonomic office chair adjustment mechanism primarily applies physics concepts to reduce what?", options: ["Body mass", "Joint stress and improper torque", "Gravitational force", "Body temperature"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Which regulatory agency sets environmental disposal standards for chemical waste in the Philippines?", options: ["DTI", "FDA", "DENR", "DOST"], answer: 2 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Laser light differs from ordinary light bulb radiation because laser light is what?", options: ["Polychromatic", "Coherent and monochromatic", "Diffuse", "Incoherent"], answer: 1 },
+        
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What optical phenomenon allows light signals to travel inside fiber optic cables without escaping?", answer: "total internal reflection" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What detergent chemical additive causes algal blooms and oxygen depletion in rivers?", answer: "phosphate" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What rotational force causes an object to turn or rotate around a pivot or fulcrum?", answer: "torque" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What upward force is exerted by a fluid on an object placed in it according to Archimedes' principle?", answer: "buoyant force" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What hollow hull design allows massive metal ships to float by increasing displaced water volume?", answer: "density" },
+
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "Which simple machine wrapped around a cylinder converts rotational motion to linear force?", options: ["Wedge", "Screw", "Lever", "Pulley"], answer: 1 },
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What heating process eliminates pathogens in dairy products without boiling the liquid?", answer: "pasteurization" },
+        { round: "Clincher Round", points: 1, timer: 10, type: "mc", question: "What circuit protection mechanism melts to interrupt excessive current flow?", options: ["Transformer", "Fuse", "Capacitor", "Resistor"], answer: 1 },
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What primary surfactant compound ingredient in soap molecules lifts nonpolar oil?", answer: "fatty acid" },
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "Which wave interaction in noise-canceling headphones neutralizes incoming sound waves?", options: ["Constructive interference", "Destructive interference", "Refraction", "Diffraction"], answer: 1 }
+      ],
+      2: [
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which motion occurs when an object moves along a straight path without rotation?", options: ["Translational motion", "Rotational motion", "Circular motion", "Vibrational motion"], answer: 0 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which device converts electrical energy into mechanical movement in household fans?", options: ["Electric generator", "Electric motor", "Transformer", "Capacitor"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Pasteurization involves heating liquids to specific temperatures to destroy what?", options: ["Chemical toxins", "Harmful pathogens", "Proteins", "Mineral compounds"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What buoyant force acts on an object submerged in a fluid according to Archimedes' principle?", options: ["Equal to object weight", "Equal to weight of displaced fluid", "Equal to fluid surface area", "Equal to atmospheric pressure"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which household product ingredient is primarily responsible for raising dough in baking?", options: ["Sodium hypochlorite", "Sodium bicarbonate", "Sodium hydroxide", "Sodium chloride"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Replacing old incandescent lights with LEDs in schools primarily reduces what?", options: ["Voltage", "Electrical energy wastage", "Light intensity", "Current frequency"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which simple machine is used in vehicle steering wheels to multiply input turning force?", options: ["Inclined plane", "Wheel and axle", "Wedge", "Pulley"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What property of light allows optical lenses to focus light rays?", options: ["Reflection", "Refraction", "Absorption", "Diffraction"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Damaged wire insulation in home appliances creates a significant risk of what?", options: ["Short circuits and electrocution", "Lower electric bills", "Overcharging", "Voltage reduction"], answer: 0 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which government agency handles consumer product safety and fair trade in product labeling?", options: ["DENR", "DTI", "FDA", "DOST"], answer: 1 },
+        
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "How does an ergonomic computer mouse design reduce repetitive strain injuries in the wrist?", options: ["By eliminating friction", "By promoting natural joint alignment and lower muscle torque", "By increasing translational acceleration", "By doubling grip force"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why is mixing household ammonia with chlorine bleach extremely dangerous?", options: ["It produces explosive nitroglycerin", "It generates toxic chloramine gas", "It neutralizes cleaning action uselessly", "It forms highly corrosive acid rain"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "A hydraulic brake system in modern automobiles amplifies pedal force using which medium?", options: ["Compressed air", "Incompressible hydraulic fluid", "Mechanical gears", "Magnetic fields"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "How did Louis Pasteur's work with wine fermentation contribute to industrial microbiology?", options: ["He discovered synthetic dyes", "He identified microbes responsible for fermentation and spoilage", "He invented antibiotics", "He created chemical fertilizers"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why does an electric kettle consume significant energy if scale deposits accumulate inside?", options: ["Scale lowers electrical resistance", "Scale acts as a thermal insulator requiring longer operation", "Scale causes short circuits", "Scale increases voltage requirements"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "What is the primary function of fluoride compounds added to personal care toothpaste?", options: ["Whiten teeth enamel", "Remineralize and prevent tooth decay", "Provide sweet flavor", "Act as a surfactant"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "In sonar navigation, how do submarine systems calculate distance to the ocean floor?", options: ["By measuring sound refraction angle", "By measuring echo time delay of reflected sound", "By absorbing light signals", "By measuring water density shifts"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "In gymnastics, executing a tight tuck flip allows faster rotation than an layout body position because what is reduced?", options: ["Rotational inertia (moment of inertia)", "Gravitational pull", "Total angular momentum", "Translational displacement"], answer: 0 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "An object submerged in water experiences an upward buoyant force of 50 N. What mass of water was displaced in kg? (g = 9.8 m/s²)", options: ["2.5 kg", "5.1 kg", "10.0 kg", "50.0 kg"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Holograms differ from standard 3D photographs because holographic recording captures what wave characteristic?", options: ["Amplitude only", "Phase information and interference patterns", "Speed variations", "Wavelength reduction"], answer: 1 },
+        
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What simple machine component acts as a fixed pivot point about which a lever rotates?", answer: "fulcrum" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What class of hazardous metals like lead and cadmium leach into groundwater from improper battery disposal?", answer: "heavy metals" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What safety device automatically breaks an electric circuit when current amperage exceeds safe limits?", answer: "circuit breaker" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "Which medical innovation uses focused, coherent light waves for precise tissue incisions?", answer: "laser" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What fluid property describes a liquid's resistance to flow and internal friction?", answer: "viscosity" },
+
+        { round: "Clincher Round", points: 1, timer: 10, type: "mc", question: "Which unit measures electric current flow through home wiring?", options: ["Volts", "Amperes", "Ohms", "Watts"], answer: 1 },
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What fundamental property of matter resists changes in its state of linear motion?", answer: "inertia" },
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "Which regulatory body certifies drug efficacy and food hygiene safety in the Philippines?", options: ["DENR", "FDA", "DTI", "DOST"], answer: 1 },
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What light wave frequency band is used by remote controls and thermal sensors?", answer: "infrared" },
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "Which law explains how pressure changes applied to an enclosed fluid transmit equally in all directions?", options: ["Archimedes' Principle", "Pascal's Principle", "Boyle's Law", "Hooke's Law"], answer: 1 }
+      ],
+      3: [
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which unit measures angular displacement in rotational kinematics?", options: ["Meters", "Radians", "Newton-meters", "Watts"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Unplugging phantom energy chargers when not in use helps homes do what?", options: ["Increase voltage", "Minimize standby energy loss", "Prevent power outages", "Boost wire speed"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Louis Pasteur developed early vaccines for which fatal viral disease affecting mammals?", options: ["Tuberculosis", "Rabies", "Malaria", "Cholera"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What is the primary function of a fixed pulley attached to a flagpole?", options: ["Multiply input force", "Change force direction", "Increase mechanical work", "Reduce load mass"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What primary chemical compound acts as the abrasive cleaner in many toothpastes?", options: ["Calcium carbonate", "Sodium hypochlorite", "Ammonia", "Ethanol"], answer: 0 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "An object will sink in water if its mass-to-volume ratio is what?", options: ["Equal to 1.0 g/cm³", "Less than 1.0 g/cm³", "Greater than 1.0 g/cm³", "Zero"], answer: 2 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which sound innovation involves placing acoustic foam panels inside radio broadcasting rooms?", options: ["Sound amplification", "Soundproofing", "Echo generation", "Sonar imaging"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Faulty household electrical wiring with stripped insulation creates a high risk of what?", options: ["Electrocution and structure fires", "Excessive energy savings", "Voltage drops", "Lower current flow"], answer: 0 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What type of light wave technology is widely used in supermarket barcode scanners?", options: ["Infrared LEDs", "Lasers", "Ultraviolet lamps", "Incandescent bulbs"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which simple machine consists of an inclined plane wrapped around a cylinder?", options: ["Wedge", "Screw", "Lever", "Wheel and axle"], answer: 1 },
+        
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "In vehicle ergonomics, how do bucket seats reduce driver fatigue during sharp turns?", options: ["By maximizing translational velocity", "By providing lateral support against rotational centripetal forces", "By reducing total vehicle weight", "By absorbing tire friction"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Louis Pasteur's swan-neck flask experiments proved what critical biological fact?", options: ["Microbes arise spontaneously from air", "Microbes enter from airborne particles, not spontaneous generation", "Heat creates new bacteria", "Viruses require chemical media"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "A compound machine like a bicycle combines which two simple machines in its drive system?", options: ["Lever and wedge", "Wheel/axle and pulley (chain/sprocket)", "Screw and inclined plane", "Hydraulic press and lever"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "What environmental health issue arises when excessive phosphate detergents enter aquatic ecosystems?", options: ["Ocean acidification", "Algal blooms leading to oxygen depletion (eutrophication)", "Thermal pollution", "Heavy metal buildup"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why does a heavy concrete block feel lighter when held under water than in air?", options: ["Gravity is lower underwater", "Water exerts an upward buoyant force equal to displaced water weight", "Water density decreases block mass", "Water pressure acts only downward"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "How does circuit breaker tripping protect home electrical systems from fire hazards?", options: ["It increases line voltage", "It cuts off current flow when amperage exceeds safe limits", "It redirects current to earth ground", "It cools overheated copper wires"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Noise-canceling headphones eliminate unwanted ambient sound using which wave interaction?", options: ["Constructive interference", "Destructive interference", "Total internal reflection", "Diffraction grating"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why are hazardous household chemicals required by DTI/FDA to display GHS warning pictograms?", options: ["To make labels decorative", "To communicate immediate health, flammability, and toxicity risks clearly", "To indicate price levels", "To list active ingredient ratios"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Converting linear motion into angular rotation depends on applying force at what distance from an axis?", options: ["At zero distance", "At a perpendicular distance (radius) to create torque", "Parallel to the bar", "At the exact center of mass"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why do modern energy-efficient air conditioners with inverter technology consume less electricity?", options: ["They run at maximum speed constantly", "They adjust compressor motor speed dynamically instead of cycling fully ON/OFF", "They bypass home circuit breakers", "They utilize hydraulic pumps"], answer: 1 },
+        
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What additive in personal care soaps acts as a chelating agent to soften hard water?", answer: "edta" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What wave interaction causes noise-canceling headphones to reduce background sound?", answer: "destructive interference" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What physical property of a body resists changes in its rotational state of motion?", answer: "rotational inertia" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What heating process eliminates disease-causing pathogens in milk and fruit juices?", answer: "pasteurization" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What simple machine consists of a wheel with a groove holding a rope or cable?", answer: "pulley" },
+
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What standard warning pictograms on cleaning products communicate toxicity and flammability?", answer: "ghs" },
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "An electric fan blade moving around a center spindle represents which motion?", options: ["Translational motion", "Rotational motion", "Linear motion", "Vibrational motion"], answer: 1 },
+        { round: "Clincher Round", points: 1, timer: 10, type: "mc", question: "What chemical element active compound in liquid bleach disinfects surfaces?", options: ["Chlorine", "Fluoride", "Iodine", "Ammonia"], answer: 0 },
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What optical wave property causes light bending when entering water from air?", answer: "refraction" },
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "What happens when two simple machines operate together in a single system?", options: ["Forms a compound machine", "Generates free energy", "Eliminates friction", "Reduces mechanical power"], answer: 0 }
+      ]
+    };
+
+    let questions = prepareShuffledSet(rawQuestionBank[1]);
     let peer = null;
-    let connections = {};
-    let players = []; 
-    let currentQIndex = 0;
+    let currentQuestion = -1;
+    let stepState = 'lobby'; 
+    let players = {}; 
+    let playerAnswers = {}; 
+    let connections = [];
+    let inClincherMode = false;
     let timerInterval = null;
     let timeLeft = 10;
-    let roomCode = 'QUIZ' + Math.floor(1000 + Math.random() * 9000);
+    let isPanelOpen = true;
 
-    // Sample Question Pool
-    const quizData = [
-      { round: "Round 1", points: 1, timerDuration: 10, question: "What is the powerhouse of the cell?", options: ["Nucleus", "Mitochondria", "Ribosome", "Golgi Body"], correct: 1, qType: "mcq" },
-      { round: "Round 1", points: 1, timerDuration: 10, question: "What element does 'O' represent on the periodic table?", options: ["Osmium", "Oxygen", "Gold", "Olive"], correct: 1, qType: "mcq" }
-    ];
+    function toggleAnswerPanel() {
+      const content = document.getElementById('liveAnswersContent');
+      const btn = document.getElementById('panelToggleBtn');
+      isPanelOpen = !isPanelOpen;
+      if (isPanelOpen) {
+        content.style.display = 'block';
+        btn.innerText = 'Hide Panel 🔼';
+      } else {
+        content.style.display = 'none';
+        btn.innerText = 'Show Panel 🔽';
+      }
+    }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('displayRoomCode').innerText = roomCode;
-      peer = new Peer(roomCode);
+    function switchQuestionSet() {
+      const selectedSet = document.getElementById('setSelect').value;
+      questions = prepareShuffledSet(rawQuestionBank[selectedSet]);
+    }
+
+    function initHostSession() {
+      if (connections.length > 0) {
+        broadcast({ type: 'session_terminated' });
+        connections.forEach(conn => { try { conn.close(); } catch(e){} });
+      }
+
+      if (peer) {
+        try { peer.destroy(); } catch(e){}
+      }
+
+      connections = [];
+      players = {};
+      playerAnswers = {};
+      currentQuestion = -1;
+      stepState = 'lobby';
+      inClincherMode = false;
+
+      switchQuestionSet();
+      updatePlayerLists();
+
+      // Regenerates dynamic, unique ROOM_CODE
+      ROOM_CODE = "QUIZ" + Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('roomCodeDisplay').innerText = "INITIALIZING...";
+      document.getElementById("qrContainer").innerHTML = `<p><i>Connecting to Server...</i></p>`;
+
+      peer = new Peer(ROOM_CODE);
 
       peer.on('open', (id) => {
-        console.log('Host Peer ID initialized:', id);
+        document.getElementById('roomCodeDisplay').innerText = id;
+        
+        // Dynamically creates exact scannable QR Code URL for players
+        const joinUrl = `https://cassandranichieagustin-hub.github.io/quiz-bee/player.html?room=${id}`;
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
+        document.getElementById("qrContainer").innerHTML = `<img src="${qrApiUrl}" width="200" height="200" alt="Join QR Code" />`;
       });
 
       peer.on('connection', (conn) => {
+        connections = connections.filter(c => c.peer !== conn.peer);
+        connections.push(conn);
+
         conn.on('data', (data) => {
           if (data.type === 'join') {
-            connections[data.uid] = conn;
-            let existing = players.find(p => p.uid === data.uid);
-            if (!existing) {
-              const fullIdentifier = data.section ? `${data.name} (${data.section})` : data.name;
-              players.push({ uid: data.uid, name: fullIdentifier, score: 0, currentAnswer: null });
+            const formattedName = data.section ? `${data.name} (${data.section})` : data.name;
+            const uid = data.uid || formattedName; 
+
+            conn.playerUid = uid;
+
+            if (!players[uid]) {
+              players[uid] = { name: formattedName, score: 0, currentPeerId: conn.peer };
+            } else {
+              players[uid].name = formattedName;
+              players[uid].currentPeerId = conn.peer;
             }
-            updateLobbyUI();
+
+            updatePlayerLists();
+
+            if (stepState === 'question' && currentQuestion >= 0) {
+              sendCurrentQuestionToConn(conn);
+            } else if (stepState === 'scoreboard') {
+              sendScoreboardToPlayer(conn);
+            }
           } else if (data.type === 'answer') {
-            let p = players.find(item => item.uid === conn.peer || connections[item.uid] === conn);
-            if (p) { p.currentAnswer = data.option; }
+            if (conn.playerUid) {
+              playerAnswers[conn.playerUid] = data.option;
+              updateLiveAnswersUI();
+            }
           }
         });
-      });
-    });
 
-    function updateLobbyUI() {
-      document.getElementById('playerCount').innerText = players.length;
-      document.getElementById('playerList').innerHTML = players.map(p => `<li>${p.name}</li>`).join('');
+        conn.on('close', () => {
+          connections = connections.filter(c => c !== conn);
+          updatePlayerLists();
+        });
+
+        conn.on('error', () => {
+          connections = connections.filter(c => c !== conn);
+        });
+      });
+    }
+
+    function resetSession() {
+      if (confirm("Are you sure you want to start a NEW session? All connected devices will be disconnected.")) {
+        initHostSession();
+      }
     }
 
     function broadcast(data) {
-      Object.values(connections).forEach(conn => {
-        if (conn && conn.open) conn.send(data);
+      connections.forEach(conn => {
+        if (conn && conn.open) {
+          try { conn.send(data); } catch (e) {}
+        }
       });
     }
 
-    function startQuiz() {
-      if (players.length === 0) return alert('Wait for at least 1 player to join!');
-      currentQIndex = 0;
-      loadQuestion(currentQIndex);
+    function updatePlayerLists() {
+      const playerArray = Object.values(players);
+      document.getElementById('playerCount').innerText = playerArray.length;
+      document.getElementById('playerList').innerHTML = playerArray.map(p => `<li><span>${p.name}</span> <span>${p.score} pts</span></li>`).join('');
     }
 
-    function loadQuestion(index) {
-      if (index >= quizData.length) return finishQuiz();
+    function updateLiveAnswersUI() {
+      const q = questions[currentQuestion];
+      const answeredUids = Object.keys(playerAnswers);
+      document.getElementById('submittedCount').innerText = answeredUids.length;
 
-      const q = quizData[index];
-      players.forEach(p => p.currentAnswer = null);
+      if (answeredUids.length === 0) {
+        document.getElementById('liveAnswersDisplay').innerHTML = `<i>Waiting for player answers...</i>`;
+        return;
+      }
 
-      document.getElementById('lobbyScreen').style.display = 'none';
-      document.getElementById('hostScoreScreen').style.display = 'none';
-      document.getElementById('hostQuestionScreen').style.display = 'block';
+      const letters = ['A', 'B', 'C', 'D'];
+      const tags = answeredUids.map(uid => {
+        const name = players[uid] ? players[uid].name : uid;
+        let ansText = playerAnswers[uid];
 
-      document.getElementById('hostQCounter').innerText = `Question ${index + 1} of ${quizData.length}`;
-      document.getElementById('hostQText').innerText = q.question;
-      document.getElementById('hostOptions').innerHTML = q.options.map((opt, i) => `<div class="opt-box">${String.fromCharCode(65+i)}. ${opt}</div>`).join('');
+        if (q.type === 'mc' && typeof ansText === 'number') {
+          ansText = letters[ansText] || ansText;
+        }
 
-      timeLeft = q.timerDuration;
-      document.getElementById('hostTimer').innerText = timeLeft;
-
-      // Send question instantly to all players
-      broadcast({
-        type: 'question',
-        qIndex: index,
-        round: q.round,
-        points: q.points,
-        question: q.question,
-        options: q.options,
-        qType: q.qType,
-        timerDuration: q.timerDuration
+        return `<span class="player-answer-tag">${name}: <b>${ansText}</b></span>`;
       });
 
-      if (timerInterval) clearInterval(timerInterval);
+      document.getElementById('liveAnswersDisplay').innerHTML = tags.join(' ');
+    }
+
+    function startTimer(duration) {
+      clearInterval(timerInterval);
+      timeLeft = duration;
+      updateTimerUI(timeLeft, duration);
+      document.getElementById('hostTimesUp').style.display = 'none';
+
+      const activeQIndex = currentQuestion;
+
       timerInterval = setInterval(() => {
         timeLeft--;
-        document.getElementById('hostTimer').innerText = timeLeft;
-        broadcast({ type: 'tick', time: timeLeft, qIndex: index });
+        updateTimerUI(timeLeft, duration);
+        broadcast({ type: 'tick', time: timeLeft, qIndex: activeQIndex });
 
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
-          evaluateAnswers();
+          document.getElementById('hostTimesUp').style.display = 'block';
+          broadcast({ type: 'timeOut', qIndex: activeQIndex });
         }
       }, 1000);
     }
 
-    function endQuestionEarly() {
-      if (timerInterval) clearInterval(timerInterval);
-      evaluateAnswers();
+    function updateTimerUI(seconds, totalDuration) {
+      document.getElementById('timerDisplay').innerText = seconds;
+      const bar = document.getElementById('hostTimerBar');
+      const percentage = (seconds / (totalDuration || 10)) * 100;
+      bar.style.width = percentage + "%";
+
+      if (seconds <= 3) {
+        bar.style.backgroundColor = "#dc3545";
+      } else if (seconds <= 5) {
+        bar.style.backgroundColor = "#fd7e14";
+      } else {
+        bar.style.backgroundColor = "#28a745";
+      }
     }
 
-    function evaluateAnswers() {
-      const q = quizData[currentQIndex];
-      players.forEach(p => {
-        if (p.currentAnswer === q.correct) {
-          p.score += q.points;
+    function checkTieForFirst() {
+      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+      return sorted.length >= 2 && sorted[0].score > 0 && sorted[0].score === sorted[1].score;
+    }
+
+    function getRoundSpecificIndex(qIndex) {
+      if (qIndex <= 9) return { index: qIndex + 1, total: 10, name: "Easy Round" };
+      if (qIndex <= 19) return { index: qIndex - 9, total: 10, name: "Moderate Round" };
+      if (qIndex <= 24) return { index: qIndex - 19, total: 5, name: "Difficult Round" };
+      return { index: qIndex - 24, total: 5, name: "Clincher Round" };
+    }
+
+    function nextStep() {
+      clearInterval(timerInterval);
+
+      if (stepState === 'lobby' || stepState === 'scoreboard' || stepState === 'roundDivider') {
+        
+        if (currentQuestion === 24) {
+          if (checkTieForFirst()) {
+            inClincherMode = true;
+            document.getElementById('tieAlert').style.display = 'block';
+            currentQuestion = 25; 
+            stepState = 'question';
+            showQuestion();
+            return;
+          } else {
+            showFinalWinner();
+            return;
+          }
+        }
+
+        if (inClincherMode && currentQuestion >= 25) {
+          if (checkTieForFirst() && currentQuestion < questions.length - 1) {
+            currentQuestion++;
+            stepState = 'question';
+            showQuestion();
+            return;
+          } else {
+            showFinalWinner();
+            return;
+          }
+        }
+
+        if (currentQuestion < 24) {
+          currentQuestion++;
+          stepState = 'question';
+          showQuestion();
+        } else {
+          showFinalWinner();
+        }
+
+      } else if (stepState === 'question') {
+        calculateScoresForCurrentQuestion();
+
+        if (currentQuestion === 9 || currentQuestion === 19 || currentQuestion === 24) {
+          stepState = 'roundDivider';
+          showRoundSummary();
+        } else {
+          stepState = 'scoreboard';
+          showScoreboard(false);
+        }
+      }
+    }
+
+    function calculateScoresForCurrentQuestion() {
+      const q = questions[currentQuestion];
+      Object.keys(playerAnswers).forEach(uid => {
+        const givenAns = playerAnswers[uid];
+        if (givenAns !== undefined && players[uid]) {
+          if (q.type === 'text') {
+            const cleanedGiven = String(givenAns).trim().toLowerCase();
+            const cleanedCorrect = String(q.answer).trim().toLowerCase();
+            if (cleanedGiven.includes(cleanedCorrect) || cleanedGiven === cleanedCorrect) {
+              players[uid].score += q.points;
+            }
+          } else {
+            if (givenAns === q.answer) {
+              players[uid].score += q.points;
+            }
+          }
         }
       });
+    }
 
-      players.sort((a, b) => b.score - a.score);
+    function sendCurrentQuestionToConn(conn) {
+      const q = questions[currentQuestion];
+      const roundMeta = getRoundSpecificIndex(currentQuestion);
+      const duration = q.timer || 10;
 
-      broadcast({
+      conn.send({
+        type: 'question',
+        question: q.question,
+        options: q.options || [],
+        qType: q.type || 'mc',
+        points: q.points,
+        round: q.round,
+        qIndex: currentQuestion,
+        qRoundIndex: roundMeta.index,
+        qRoundTotal: roundMeta.total,
+        qRoundName: roundMeta.name,
+        currentTimeLeft: timeLeft,
+        timerDuration: duration
+      });
+    }
+
+    function showQuestion() {
+      playerAnswers = {}; 
+      updateLiveAnswersUI();
+
+      document.getElementById('lobby').style.display = 'none';
+      document.getElementById('scoreboardArea').style.display = 'none';
+      document.getElementById('questionArea').style.display = 'block';
+      document.getElementById('hostTimesUp').style.display = 'none';
+
+      const q = questions[currentQuestion];
+      const letters = ['A', 'B', 'C', 'D'];
+      const roundMeta = getRoundSpecificIndex(currentQuestion);
+
+      const badge = document.getElementById('roundBadge');
+      badge.innerText = `${q.round} (${q.points} PT${q.points > 1 ? 'S' : ''})`;
+      badge.className = `badge ${q.round.split(' ')[0].toLowerCase()}`;
+
+      document.getElementById('qNumber').innerText = `${roundMeta.name}: Question ${roundMeta.index} of ${roundMeta.total}`;
+      document.getElementById('qText').innerText = q.question;
+      
+      if (q.type === 'text') {
+        document.getElementById('optionsList').innerHTML = `<div class="option-item"><b>✍️ IDENTIFICATION QUESTION:</b> Type your answer on device.</div>`;
+      } else {
+        document.getElementById('optionsList').innerHTML = q.options.map((opt, i) => 
+          `<div class="option-item"><b>${letters[i]}.</b> ${opt}</div>`
+        ).join('');
+      }
+
+      const duration = q.timer || 10;
+
+      connections.forEach(conn => {
+        if (conn && conn.open) sendCurrentQuestionToConn(conn);
+      });
+
+      startTimer(duration);
+    }
+
+    function sendScoreboardToPlayer(conn) {
+      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+      const currentQ = questions[currentQuestion] || questions[0];
+      const uid = conn.playerUid;
+      const playerChoice = playerAnswers[uid];
+      
+      let isCorrect = false;
+      let correctDisplay = "";
+
+      if (currentQ.type === 'text') {
+        const cleanedGiven = String(playerChoice || '').trim().toLowerCase();
+        const cleanedCorrect = String(currentQ.answer).trim().toLowerCase();
+        isCorrect = cleanedGiven.includes(cleanedCorrect) || (cleanedGiven === cleanedCorrect);
+        correctDisplay = currentQ.answer.toUpperCase();
+      } else {
+        isCorrect = (playerChoice === currentQ.answer);
+        correctDisplay = `${['A','B','C','D'][currentQ.answer]}. ${currentQ.options[currentQ.answer]}`;
+      }
+
+      conn.send({
         type: 'scoreboard',
-        leaderboard: players.map(p => ({ name: p.name, score: p.score })),
-        correctAnswerText: q.options[q.correct]
+        leaderboard: sorted,
+        isCorrect: isCorrect,
+        correctAnswerText: correctDisplay,
+        qIndex: currentQuestion
       });
-
-      document.getElementById('hostQuestionScreen').style.display = 'none';
-      document.getElementById('hostScoreScreen').style.display = 'block';
-      document.getElementById('hostLeaderboard').innerHTML = players.map((p, i) => `<li><span>${i+1}. ${p.name}</span> <span>${p.score} pts</span></li>`).join('');
     }
 
-    function nextQuestion() {
-      currentQIndex++;
-      loadQuestion(currentQIndex);
-    }
+    function showScoreboard(isRoundEnd) {
+      document.getElementById('questionArea').style.display = 'none';
+      document.getElementById('scoreboardArea').style.display = 'block';
 
-    function finishQuiz() {
-      broadcast({
-        type: 'end',
-        leaderboard: players.map(p => ({ name: p.name, score: p.score }))
+      document.getElementById('scoreboardTitle').innerText = isRoundEnd ? "🎉 Round Tallyboard" : "📊 Current Standings";
+
+      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+
+      document.getElementById('roundScoreboard').innerHTML = sorted.map((p, index) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+        return `<li><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
+      }).join('');
+
+      document.getElementById('manualClincherBtn').style.display = (currentQuestion >= 24) ? 'inline-block' : 'none';
+      document.getElementById('nextBtn').innerText = isRoundEnd ? "Start Next Round ➔" : "Next Question ➔";
+
+      connections.forEach(conn => {
+        if (conn && conn.open) sendScoreboardToPlayer(conn);
       });
-      alert('Quiz Finished!');
     }
+
+    function showRoundSummary() {
+      showScoreboard(true);
+      const currentRoundName = questions[currentQuestion].round;
+      document.getElementById('scoreboardTitle').innerText = `🏁 END OF ${currentRoundName.toUpperCase()} TALLYBOARD`;
+    }
+
+    function startClincherManually() {
+      inClincherMode = true;
+      currentQuestion = 25;
+      document.getElementById('tieAlert').innerText = "⚡ MANUAL CLINCHER ROUND ACTIVATED!";
+      document.getElementById('tieAlert').style.display = 'block';
+      stepState = 'question';
+      showQuestion();
+    }
+
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    function showFinalWinner() {
+      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+      
+      let winnerTitle = "";
+      if (checkTieForFirst()) {
+        const tiedWinners = sorted.filter(p => p.score === sorted[0].score).map(p => p.name).join(" & ");
+        winnerTitle = `👑 CO-CHAMPIONS: ${tiedWinners}`;
+      } else {
+        const winner = sorted[0] ? sorted[0].name : 'No one';
+        winnerTitle = `👑 ${winner}`;
+      }
+
+      triggerConfetti();
+
+      document.getElementById('scoreboardArea').style.display = 'none';
+      document.getElementById('questionArea').style.display = 'block';
+      document.getElementById('questionArea').innerHTML = `
+        <h1>🏆 GRAND CHAMPION 🏆</h1>
+        <h2 style="color: #007bff; font-size: 30px;">${winnerTitle}</h2>
+        <h3>Final Quiz Bee Tallyboard:</h3>
+        <ul>${sorted.map((p, i) => `<li><span>${i+1}. ${p.name}</span> <span>${p.score} pts</span></li>`).join('')}</ul>
+      `;
+      
+      broadcast({ type: 'end', leaderboard: sorted });
+    }
+
+    window.addEventListener('DOMContentLoaded', initHostSession);
   </script>
 </body>
 </html>
