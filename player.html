@@ -117,7 +117,6 @@
     let roomCode = '';
     let isTimeUp = false;
 
-    // Retrieve or generate persistent UID for player
     function getOrCreateUid() {
       let uid = localStorage.getItem('qb_uid');
       if (!uid) {
@@ -134,18 +133,18 @@
       const savedSection = localStorage.getItem('qb_section') || '';
 
       if (savedRoom) {
-        document.getElementById('roomInput').value = savedRoom;
+        document.getElementById('roomInput').value = savedRoom.toUpperCase();
       }
 
       if (savedRoom && savedName) {
-        roomCode = savedRoom.toUpperCase();
-        playerName = savedName;
-        playerSection = savedSection;
+        roomCode = savedRoom.trim().toUpperCase();
+        playerName = savedName.trim();
+        playerSection = savedSection.trim();
         fullPlayerIdentifier = playerSection ? `${playerName} (${playerSection})` : playerName;
 
         document.getElementById('joinScreen').style.display = 'none';
         document.getElementById('waitingScreen').style.display = 'block';
-        document.getElementById('waitingStatus').innerText = "Restoring Connection... 🔄";
+        document.getElementById('waitingStatus').innerText = "Connecting to Host... 🔄";
         connectToHost();
       }
     });
@@ -172,7 +171,7 @@
       peer = new Peer();
 
       peer.on('open', () => {
-        conn = peer.connect(roomCode);
+        conn = peer.connect(roomCode, { reliable: true });
 
         conn.on('open', () => {
           conn.send({ 
@@ -242,7 +241,7 @@
         });
 
         conn.on('error', () => {
-          document.getElementById('waitingStatus').innerText = "Connection Error. Retrying...";
+          document.getElementById('waitingStatus').innerText = "Connecting... (Check Room Code)";
           setTimeout(connectToHost, 2000);
         });
       });
