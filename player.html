@@ -18,7 +18,7 @@
     .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
     .clincher-bar { background: #6f42c1; color: white; }
     
-    .q-counter-badge { font-size: 14px; font-weight: bold; color: #aaa; margin-bottom: 4px; }
+    .q-counter-badge { font-size: 15px; font-weight: bold; color: #61dafb; margin-bottom: 6px; }
 
     .timer-container { margin: 10px 0 15px 0; }
     .timer-badge { font-size: 22px; font-weight: bold; color: #ff6b6b; margin-bottom: 6px; }
@@ -78,7 +78,7 @@
 
   <!-- QUESTION SCREEN -->
   <div class="card" id="questionScreen" style="display:none;">
-    <div class="q-counter-badge" id="playerQCounter">Question 1 of 30</div>
+    <div class="q-counter-badge" id="playerQCounter">Question 1 of 10</div>
     <div class="info-bar" id="roundInfo">Round 1</div>
     
     <div class="timer-container">
@@ -374,8 +374,8 @@
       const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
       updatePlayerTimerUI(startSeconds);
 
-      if (data.qIndex && data.qTotal) {
-        document.getElementById('playerQCounter').innerText = `Question ${data.qIndex} of ${data.qTotal}`;
+      if (data.qRoundIndex && data.qRoundTotal) {
+        document.getElementById('playerQCounter').innerText = `${data.qRoundName || 'Question'}: ${data.qRoundIndex} of ${data.qRoundTotal}`;
       } else {
         document.getElementById('playerQCounter').innerText = '';
       }
