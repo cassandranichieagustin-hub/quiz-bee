@@ -461,10 +461,16 @@
 
     function renderQuestion(data) {
       currentMaxTimer = data.timerDuration || 10;
-      const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
       
-      // Strict evaluation of Question Active Lock
-      isTimeUp = (data.isLocked === true || startSeconds <= 0);
+      const now = Date.now();
+      let remainingSeconds = data.currentTimeLeft !== undefined ? data.currentTimeLeft : currentMaxTimer;
+
+      if (data.timerEndTime && data.timerEndTime > 0) {
+        remainingSeconds = Math.max(0, Math.ceil((data.timerEndTime - now) / 1000));
+      }
+
+      // Hard check: If host locks it or time remaining <= 0
+      isTimeUp = (data.isLocked === true || remainingSeconds <= 0);
 
       const timesUpBanner = document.getElementById('playerTimesUp');
 
@@ -473,7 +479,7 @@
         updatePlayerTimerUI(0);
       } else {
         timesUpBanner.style.display = 'none';
-        updatePlayerTimerUI(startSeconds);
+        updatePlayerTimerUI(remainingSeconds);
       }
 
       if (data.qRoundIndex && data.qRoundTotal) {
@@ -519,13 +525,16 @@
           
           btn.disabled = isTimeUp;
           
-          // Pure Pointer Event Handler for Mobile & Desktop Compatibility
           btn.addEventListener('pointerdown', (e) => {
             selectOption(idx);
           });
 
           container.appendChild(btn);
         });
+      }
+
+      if (isTimeUp) {
+        disableOptions();
       }
     }
 
@@ -545,4 +554,3 @@
   </script>
 </body>
 </html>
-
