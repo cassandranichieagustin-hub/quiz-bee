@@ -121,8 +121,8 @@
 
     let currentQuestion = -1;
     let stepState = 'lobby'; 
-    let players = {}; 
-    let playerAnswers = {};
+    let players = {}; // Structure: { playerUid: { name: String, score: Number, currentPeerId: String } }
+    let playerAnswers = {}; // Structure: { playerUid: optionIndex }
     let connections = [];
     let inClincherMode = false;
     let timerInterval = null;
@@ -142,13 +142,21 @@
       conn.on('data', (data) => {
         if (data.type === 'join') {
           const formattedName = data.section ? `${data.name} (${data.section})` : data.name;
-          if (!players[conn.peer]) {
-            players[conn.peer] = { name: formattedName, score: 0 };
+          const uid = data.uid || formattedName; // Unique identifier for the player profile
+
+          conn.playerUid = uid; // Store UID on connection object
+
+          if (!players[uid]) {
+            // First time joining -> register score = 0
+            players[uid] = { name: formattedName, score: 0, currentPeerId: conn.peer };
           } else {
-            players[conn.peer].name = formattedName;
+            // Reconnecting player -> keep existing score, update connection ID & name
+            players[uid].name = formattedName;
+            players[uid].currentPeerId = conn.peer;
           }
           updatePlayerLists();
 
+          // Sync game state immediately if joining mid-question
           if (stepState === 'question' && currentQuestion >= 0) {
             const q = questions[currentQuestion];
             conn.send({
@@ -159,20 +167,26 @@
               round: q.round,
               currentTimeLeft: timeLeft
             });
+          } else if (stepState === 'scoreboard') {
+            sendScoreboardToPlayer(conn);
           }
         } else if (data.type === 'answer') {
-          playerAnswers[conn.peer] = data.option;
+          if (conn.playerUid) {
+            playerAnswers[conn.playerUid] = data.option;
+          }
         }
       });
 
       conn.on('close', () => {
-        delete players[conn.peer];
+        // Keep player profile in memory so score is not lost on temporary dropouts
         updatePlayerLists();
       });
     });
 
     function broadcast(data) {
-      connections.forEach(conn => conn.send(data));
+      connections.forEach(conn => {
+        if (conn.open) conn.send(data);
+      });
     }
 
     function updatePlayerLists() {
@@ -261,9 +275,9 @@
 
     function calculateScoresForCurrentQuestion() {
       const q = questions[currentQuestion];
-      Object.keys(playerAnswers).forEach(peerId => {
-        if (playerAnswers[peerId] === q.answer && players[peerId]) {
-          players[peerId].score += q.points;
+      Object.keys(playerAnswers).forEach(uid => {
+        if (playerAnswers[uid] === q.answer && players[uid]) {
+          players[uid].score += q.points;
         }
       });
     }
@@ -301,6 +315,21 @@
       startTimer();
     }
 
+    function sendScoreboardToPlayer(conn) {
+      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+      const currentQ = questions[currentQuestion] || questions[0];
+      const uid = conn.playerUid;
+      const playerChoice = playerAnswers[uid];
+      const isCorrect = (playerChoice === currentQ.answer);
+
+      conn.send({
+        type: 'scoreboard',
+        leaderboard: sorted,
+        isCorrect: isCorrect,
+        correctAnswerText: `${['A','B','C','D'][currentQ.answer]}. ${currentQ.options[currentQ.answer]}`
+      });
+    }
+
     function showScoreboard(isRoundEnd) {
       document.getElementById('questionArea').style.display = 'none';
       document.getElementById('scoreboardArea').style.display = 'block';
@@ -317,18 +346,8 @@
       document.getElementById('manualClincherBtn').style.display = (currentQuestion === 8) ? 'inline-block' : 'none';
       document.getElementById('nextBtn').innerText = isRoundEnd ? "Start Next Round ➔" : "Next Question ➔";
 
-      const currentQ = questions[currentQuestion];
-
       connections.forEach(conn => {
-        const playerChoice = playerAnswers[conn.peer];
-        const isCorrect = (playerChoice === currentQ.answer);
-        
-        conn.send({
-          type: 'scoreboard',
-          leaderboard: sorted,
-          isCorrect: isCorrect,
-          correctAnswerText: `${['A','B','C','D'][currentQ.answer]}. ${currentQ.options[currentQ.answer]}`
-        });
+        if (conn.open) sendScoreboardToPlayer(conn);
       });
     }
 
