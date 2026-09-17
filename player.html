@@ -12,9 +12,9 @@
     input[type="text"] { width: 85%; padding: 12px; margin-bottom: 12px; border-radius: 6px; border: none; font-size: 16px; text-align: center; }
     .section-field { display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; margin-bottom: 12px; }
     .section-field input { width: 140px; margin: 0 0 0 8px; padding: 8px; border-bottom: 2px solid #61dafb; border-radius: 0; background: transparent; color: white; font-weight: bold; }
-    .btn { background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.2s ease; }
+    .btn { background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.2s ease; pointer-events: auto !important; }
     .btn.selected { background: #007bff !important; color: white !important; transform: scale(1.02); box-shadow: 0 0 10px rgba(0,123,255,0.5); }
-    .btn:disabled { background: #666; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn:disabled { background: #666 !important; cursor: not-allowed; pointer-events: none !important; transform: none; box-shadow: none; }
     .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
     .clincher-bar { background: #6f42c1; color: white; }
     
@@ -29,8 +29,9 @@
     .result-wrong { background: #dc3545; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
     #qText { font-size: 20px; margin: 15px 0; color: #fff; line-height: 1.4; }
     
-    .text-input-field { background: #fff; color: #333; font-size: 18px; font-weight: bold; padding: 14px; border-radius: 8px; width: 90%; border: none; margin-bottom: 10px; }
-    
+    .text-input-field { background: #fff; color: #333; font-size: 18px; font-weight: bold; padding: 14px; border-radius: 8px; width: 90%; border: none; margin-bottom: 10px; pointer-events: auto !important; }
+    .text-input-field:disabled { background: #666 !important; pointer-events: none !important; }
+
     .times-up-banner {
       display: none;
       font-size: 26px;
@@ -433,10 +434,8 @@
 
       document.getElementById('qText').innerText = data.question;
       
-      // COMPLETELY FLUSH AND RE-BUILD THE OPTIONS CONTAINER DOM NODE
-      const oldContainer = document.getElementById('optionsContainer');
-      const newContainer = oldContainer.cloneNode(false);
-      oldContainer.parentNode.replaceChild(newContainer, oldContainer);
+      const container = document.getElementById('optionsContainer');
+      container.innerHTML = '';
 
       if (data.qType === 'text') {
         const textInput = document.createElement('input');
@@ -445,13 +444,14 @@
         textInput.placeholder = 'Type your answer...';
         textInput.id = 'typedAnswerBox';
         textInput.disabled = false;
+        textInput.removeAttribute('disabled');
 
         textInput.oninput = () => {
           if (isTimeUp) return;
           conn.send({ type: 'answer', option: textInput.value });
         };
 
-        newContainer.appendChild(textInput);
+        container.appendChild(textInput);
       } else {
         const letters = ['A', 'B', 'C', 'D'];
         data.options.forEach((opt, idx) => {
@@ -459,6 +459,7 @@
           btn.className = 'btn';
           btn.innerText = `${letters[idx]}. ${opt}`;
           btn.disabled = false;
+          btn.removeAttribute('disabled');
           
           btn.onclick = () => {
             if (isTimeUp) return;
@@ -468,7 +469,7 @@
 
             conn.send({ type: 'answer', option: idx });
           };
-          newContainer.appendChild(btn);
+          container.appendChild(btn);
         });
       }
 
@@ -480,9 +481,15 @@
     }
 
     function disableOptions() {
-      document.querySelectorAll('#optionsContainer .btn').forEach(b => b.disabled = true);
+      document.querySelectorAll('#optionsContainer .btn').forEach(b => {
+        b.disabled = true;
+        b.setAttribute('disabled', 'true');
+      });
       const textInput = document.getElementById('typedAnswerBox');
-      if (textInput) textInput.disabled = true;
+      if (textInput) {
+        textInput.disabled = true;
+        textInput.setAttribute('disabled', 'true');
+      }
     }
   </script>
 </body>
