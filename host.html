@@ -129,7 +129,6 @@
     let timeLeft = 20;
 
     function initHostSession() {
-      // Terminate all existing connected devices if resetting
       if (connections.length > 0) {
         broadcast({ type: 'session_terminated' });
         connections.forEach(conn => { try { conn.close(); } catch(e){} });
@@ -144,6 +143,7 @@
       playerAnswers = {};
       currentQuestion = -1;
       stepState = 'lobby';
+      inClincherMode = false;
       updatePlayerLists();
 
       ROOM_CODE = "QUIZ" + Math.floor(1000 + Math.random() * 9000);
@@ -273,22 +273,28 @@
       clearInterval(timerInterval);
 
       if (stepState === 'lobby' || stepState === 'scoreboard' || stepState === 'roundDivider') {
-        if (currentQuestion === 8 && !inClincherMode) {
-          if (checkTieForFirst()) {
-            inClincherMode = true;
-            document.getElementById('tieAlert').style.display = 'block';
-            currentQuestion = 9;
+        
+        // At question 8 (end of main round) OR during clincher questions
+        if ((currentQuestion === 8 || inClincherMode) && checkTieForFirst()) {
+          inClincherMode = true;
+          document.getElementById('tieAlert').style.display = 'block';
+
+          // If still tied, move to next available clincher question
+          if (currentQuestion < questions.length - 1) {
+            currentQuestion = Math.max(9, currentQuestion + 1);
             stepState = 'question';
             showQuestion();
-            return;
-          } else {
-            showFinalWinner();
             return;
           }
         }
 
-        currentQuestion++;
-        if (currentQuestion < questions.length) {
+        // Advance to next question if available
+        if (currentQuestion < questions.length - 1 && !inClincherMode) {
+          currentQuestion++;
+          stepState = 'question';
+          showQuestion();
+        } else if (inClincherMode && currentQuestion < questions.length - 1) {
+          currentQuestion++;
           stepState = 'question';
           showQuestion();
         } else {
@@ -378,7 +384,7 @@
         return `<li><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
       }).join('');
 
-      document.getElementById('manualClincherBtn').style.display = (currentQuestion === 8) ? 'inline-block' : 'none';
+      document.getElementById('manualClincherBtn').style.display = (currentQuestion >= 8) ? 'inline-block' : 'none';
       document.getElementById('nextBtn').innerText = isRoundEnd ? "Start Next Round ➔" : "Next Question ➔";
 
       connections.forEach(conn => {
@@ -402,13 +408,21 @@
 
     function showFinalWinner() {
       const sorted = Object.values(players).sort((a, b) => b.score - a.score);
-      const winner = sorted[0] ? sorted[0].name : 'No one';
       
+      let winnerTitle = "";
+      if (checkTieForFirst()) {
+        const tiedWinners = sorted.filter(p => p.score === sorted[0].score).map(p => p.name).join(" & ");
+        winnerTitle = `👑 CO-CHAMPIONS: ${tiedWinners}`;
+      } else {
+        const winner = sorted[0] ? sorted[0].name : 'No one';
+        winnerTitle = `👑 ${winner}`;
+      }
+
       document.getElementById('scoreboardArea').style.display = 'none';
       document.getElementById('questionArea').style.display = 'block';
       document.getElementById('questionArea').innerHTML = `
         <h1>🏆 GRAND CHAMPION 🏆</h1>
-        <h2 style="color: #007bff; font-size: 34px;">👑 ${winner}</h2>
+        <h2 style="color: #007bff; font-size: 30px;">${winnerTitle}</h2>
         <h3>Final Quiz Bee Tallyboard:</h3>
         <ul>${sorted.map((p, i) => `<li><span>${i+1}. ${p.name}</span> <span>${p.score} pts</span></li>`).join('')}</ul>
       `;
