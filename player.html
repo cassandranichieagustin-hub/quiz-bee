@@ -113,10 +113,22 @@
     let playerName = '';
     let playerSection = '';
     let fullPlayerIdentifier = '';
+    let playerUid = '';
     let roomCode = '';
     let isTimeUp = false;
 
+    // Retrieve or generate persistent UID for player
+    function getOrCreateUid() {
+      let uid = localStorage.getItem('qb_uid');
+      if (!uid) {
+        uid = 'P_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        localStorage.setItem('qb_uid', uid);
+      }
+      return uid;
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
+      playerUid = getOrCreateUid();
       const savedRoom = roomFromUrl || localStorage.getItem('qb_room');
       const savedName = localStorage.getItem('qb_name');
       const savedSection = localStorage.getItem('qb_section') || '';
@@ -163,7 +175,12 @@
         conn = peer.connect(roomCode);
 
         conn.on('open', () => {
-          conn.send({ type: 'join', name: playerName, section: playerSection });
+          conn.send({ 
+            type: 'join', 
+            name: playerName, 
+            section: playerSection,
+            uid: playerUid 
+          });
           document.getElementById('joinScreen').style.display = 'none';
           document.getElementById('waitingScreen').style.display = 'block';
           document.getElementById('waitingStatus').innerText = "Connected! 🚀";
