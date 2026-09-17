@@ -238,13 +238,20 @@
             
             showQuestion(data);
           } else if (data.type === 'tick') {
-            updatePlayerTimerUI(data.time);
+            // Guard against stale tick messages from previous questions
+            if (data.qIndex === undefined || data.qIndex === currentQuestionIndex) {
+              updatePlayerTimerUI(data.time);
+            }
           } else if (data.type === 'timeOut') {
-            isTimeUp = true;
-            updatePlayerTimerUI(0);
-            document.getElementById('playerTimesUp').style.display = 'block';
-            disableOptions();
+            // Guard against stale timeout messages from previous questions
+            if (data.qIndex === undefined || data.qIndex === currentQuestionIndex) {
+              isTimeUp = true;
+              updatePlayerTimerUI(0);
+              document.getElementById('playerTimesUp').style.display = 'block';
+              disableOptions();
+            }
           } else if (data.type === 'scoreboard') {
+            // Only lock/transition if scoreboard matches current question index or is general
             isTimeUp = true;
             document.getElementById('questionScreen').style.display = 'none';
             document.getElementById('endScreen').style.display = 'none';
@@ -371,7 +378,7 @@
     });
 
     function showQuestion(data) {
-      // FORCE RESET LOCK STATE FOR EVERY NEW QUESTION
+      // 1. Force reset input and timer locks immediately
       isTimeUp = false;
       document.getElementById('playerTimesUp').style.display = 'none';
       currentQuestionIndex = data.qIndex;
@@ -392,7 +399,7 @@
 
       document.getElementById('qText').innerText = data.question;
       const container = document.getElementById('optionsContainer');
-      container.innerHTML = ''; // Fresh rebuild
+      container.innerHTML = ''; // Completely wipe previous options
 
       if (data.qType === 'text') {
         const textInput = document.createElement('input');
@@ -400,7 +407,7 @@
         textInput.className = 'text-input-field';
         textInput.placeholder = 'Type your answer...';
         textInput.id = 'typedAnswerBox';
-        textInput.disabled = false; // Ensure enabled
+        textInput.disabled = false; // Explicitly active
 
         textInput.oninput = () => {
           if (isTimeUp) return;
@@ -414,7 +421,7 @@
           const btn = document.createElement('button');
           btn.className = 'btn';
           btn.innerText = `${letters[idx]}. ${opt}`;
-          btn.disabled = false; // Ensure enabled
+          btn.disabled = false; // Explicitly active
           
           btn.onclick = () => {
             if (isTimeUp) return;
