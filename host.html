@@ -152,6 +152,8 @@
             players[uid].name = formattedName;
             players[uid].currentPeerId = conn.peer;
           }
+
+          // Instantly update lobby list
           updatePlayerLists();
 
           if (stepState === 'question' && currentQuestion >= 0) {
