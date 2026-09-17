@@ -22,7 +22,25 @@
     ul { list-style: none; padding: 0; }
     li { background: #e9ecef; margin: 8px 0; padding: 12px 16px; border-radius: 6px; display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
     .options-display { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
-    .option-item { font-size: 18px; margin: 8px 0; font-weight: bold; color: #333; }
+    
+    /* Option styling & correct answer reveal animation */
+    .option-item { 
+      font-size: 18px; margin: 8px 0; font-weight: bold; color: #333; padding: 10px; border-radius: 6px; 
+      transition: all 0.3s ease; border: 2px solid transparent;
+    }
+    .option-item.correct-reveal {
+      background: #d4edda !important;
+      border-color: #28a745 !important;
+      color: #155724 !important;
+      font-size: 20px !important;
+      box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
+    }
+
+    .correct-text-box {
+      display: none; background: #d4edda; color: #155724; border: 2px solid #28a745; 
+      padding: 15px; border-radius: 8px; font-size: 22px; font-weight: bold; margin: 15px 0;
+    }
+
     .alert-banner { background: #fff3cd; color: #856404; padding: 12px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; }
     .room-code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #007bff; background: #e7f1ff; padding: 8px 20px; border-radius: 8px; display: inline-block; margin: 10px 0; }
     
@@ -88,6 +106,7 @@
     <h1 id="qText" style="margin: 15px 0;">Question goes here...</h1>
     
     <div class="options-display" id="optionsList"></div>
+    <div class="correct-text-box" id="textAnswerReveal"></div>
     
     <button id="qNextBtn" onclick="nextStep()">Show Leaderboard 📊</button>
   </div>
@@ -360,10 +379,27 @@
 
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
-          document.getElementById('hostTimesUp').style.display = 'block';
+          revealHostCorrectAnswer(); // REVEAL CORRECT ANSWER WHEN TIMER EXPIRES
           broadcast({ type: 'timeOut', qIndex: activeQIndex });
         }
       }, 1000);
+    }
+
+    function revealHostCorrectAnswer() {
+      document.getElementById('hostTimesUp').style.display = 'block';
+      const q = questions[currentQuestion];
+      
+      if (q.type === 'text') {
+        const textRevealBox = document.getElementById('textAnswerReveal');
+        textRevealBox.innerHTML = `✅ <b>CORRECT ANSWER:</b> ${q.answer.toUpperCase()}`;
+        textRevealBox.style.display = 'block';
+      } else {
+        const optionItems = document.querySelectorAll('.options-display .option-item');
+        if (optionItems[q.answer]) {
+          optionItems[q.answer].classList.add('correct-reveal');
+          optionItems[q.answer].innerHTML += ` &nbsp; ✅ <b>(CORRECT)</b>`;
+        }
+      }
     }
 
     function updateTimerUI(seconds, totalDuration) {
@@ -493,6 +529,7 @@
       document.getElementById('scoreboardArea').style.display = 'none';
       document.getElementById('questionArea').style.display = 'block';
       document.getElementById('hostTimesUp').style.display = 'none';
+      document.getElementById('textAnswerReveal').style.display = 'none';
 
       const q = questions[currentQuestion];
       const letters = ['A', 'B', 'C', 'D'];
