@@ -8,7 +8,7 @@
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 20px; }
     .card { background: white; max-width: 650px; margin: auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    #qrContainer { margin: 20px 0; }
+    #qrContainer { margin: 20px 0; min-height: 200px; display: flex; align-items: center; justify-content: center; }
     #qrContainer img { border: 4px solid #007bff; border-radius: 8px; padding: 5px; }
     button { background: #007bff; color: white; border: none; padding: 14px 28px; font-size: 18px; border-radius: 6px; cursor: pointer; margin-top: 15px; font-weight: bold; }
     button:hover { background: #0056b3; }
@@ -53,11 +53,11 @@
     <p>Scan the QR Code using the provided device to join:</p>
     
     <div id="qrContainer">
-      <p><i>Generating QR Code...</i></p>
+      <p><i>Connecting to Server...</i></p>
     </div>
 
     <p style="margin-bottom: 5px;">ROOM CODE:</p>
-    <div class="room-code" id="roomCodeDisplay">LOADING...</div>
+    <div class="room-code" id="roomCodeDisplay">INITIALIZING...</div>
     <br>
     <button onclick="nextStep()">Start Quiz Bee 🚀</button>
 
@@ -99,8 +99,7 @@
 
   <script>
     const ROOM_CODE = "QUIZ" + Math.floor(1000 + Math.random() * 9000);
-    document.getElementById('roomCodeDisplay').innerText = ROOM_CODE;
-
+    
     const questions = [
       { round: "Easy Round", points: 1, question: "What is the capital of the Philippines?", options: ["Cebu", "Manila", "Davao", "Quezon City"], answer: 1 },
       { round: "Easy Round", points: 1, question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Saturn"], answer: 1 },
@@ -121,8 +120,8 @@
 
     let currentQuestion = -1;
     let stepState = 'lobby'; 
-    let players = {}; // Structure: { playerUid: { name: String, score: Number, currentPeerId: String } }
-    let playerAnswers = {}; // Structure: { playerUid: optionIndex }
+    let players = {}; 
+    let playerAnswers = {}; 
     let connections = [];
     let inClincherMode = false;
     let timerInterval = null;
@@ -131,6 +130,7 @@
     const peer = new Peer(ROOM_CODE);
 
     peer.on('open', (id) => {
+      document.getElementById('roomCodeDisplay').innerText = id;
       const joinUrl = `https://cassandranichieagustin-hub.github.io/quiz-bee/player.html?room=${id}`;
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
       document.getElementById("qrContainer").innerHTML = `<img src="${qrApiUrl}" width="200" height="200" alt="Join QR Code" />`;
@@ -142,21 +142,18 @@
       conn.on('data', (data) => {
         if (data.type === 'join') {
           const formattedName = data.section ? `${data.name} (${data.section})` : data.name;
-          const uid = data.uid || formattedName; // Unique identifier for the player profile
+          const uid = data.uid || formattedName; 
 
-          conn.playerUid = uid; // Store UID on connection object
+          conn.playerUid = uid;
 
           if (!players[uid]) {
-            // First time joining -> register score = 0
             players[uid] = { name: formattedName, score: 0, currentPeerId: conn.peer };
           } else {
-            // Reconnecting player -> keep existing score, update connection ID & name
             players[uid].name = formattedName;
             players[uid].currentPeerId = conn.peer;
           }
           updatePlayerLists();
 
-          // Sync game state immediately if joining mid-question
           if (stepState === 'question' && currentQuestion >= 0) {
             const q = questions[currentQuestion];
             conn.send({
@@ -178,7 +175,6 @@
       });
 
       conn.on('close', () => {
-        // Keep player profile in memory so score is not lost on temporary dropouts
         updatePlayerLists();
       });
     });
