@@ -125,6 +125,7 @@
     let reconnectTimer = null;
     let isTerminated = false;
     let currentMaxTimer = 10;
+    let currentQuestionIndex = -1;
 
     function getOrCreateUid() {
       let uid = localStorage.getItem('qb_uid');
@@ -370,8 +371,9 @@
     });
 
     function showQuestion(data) {
-      // RESET LOCK STATE FOR NEW QUESTION
+      // CLEAR & RESET STATE FOR EVERY NEW QUESTION
       isTimeUp = false;
+      currentQuestionIndex = data.qIndex;
 
       currentMaxTimer = data.timerDuration || 10;
       const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
@@ -389,7 +391,7 @@
 
       document.getElementById('qText').innerText = data.question;
       const container = document.getElementById('optionsContainer');
-      container.innerHTML = '';
+      container.innerHTML = ''; // Fresh rebuild
 
       if (data.qType === 'text') {
         const textInput = document.createElement('input');
