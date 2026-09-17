@@ -260,6 +260,7 @@
     let inClincherMode = false;
     let timerInterval = null;
     let timeLeft = 10;
+    let isQuestionLocked = false; // Server-side Lock Flag
 
     function switchQuestionSet() {
       const selectedSet = document.getElementById('setSelect').value;
@@ -282,6 +283,7 @@
       currentQuestion = -1;
       stepState = 'lobby';
       inClincherMode = false;
+      isQuestionLocked = false;
 
       switchQuestionSet();
       updatePlayerLists();
@@ -326,7 +328,8 @@
               sendScoreboardToPlayer(conn);
             }
           } else if (data.type === 'answer') {
-            if (conn.playerUid) {
+            // REJECT SUBMISSIONS IF QUESTION TIMER IS LOCKED
+            if (!isQuestionLocked && conn.playerUid) {
               playerAnswers[conn.playerUid] = data.option;
             }
           }
@@ -366,6 +369,7 @@
     function startTimer(duration) {
       clearInterval(timerInterval);
       timeLeft = duration;
+      isQuestionLocked = false;
       updateTimerUI(timeLeft, duration);
       document.getElementById('hostTimesUp').style.display = 'none';
 
@@ -378,6 +382,7 @@
 
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
+          isQuestionLocked = true; // HARD LOCK SERVER-SIDE
           revealHostCorrectAnswer();
           broadcast({ type: 'timeOut', qIndex: activeQIndex });
         }
@@ -468,7 +473,7 @@
         }
 
       } else if (stepState === 'question') {
-        // Broadcast input lock so all player options immediately freeze
+        isQuestionLocked = true;
         broadcast({ type: 'lockInputs', qIndex: currentQuestion });
 
         calculateScoresForCurrentQuestion();
@@ -520,12 +525,14 @@
         qRoundTotal: roundMeta.total,
         qRoundName: roundMeta.name,
         currentTimeLeft: timeLeft,
-        timerDuration: duration
+        timerDuration: duration,
+        isLocked: isQuestionLocked // Send current lock status on refresh
       });
     }
 
     function showQuestion() {
       playerAnswers = {}; 
+      isQuestionLocked = false;
 
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('scoreboardArea').style.display = 'none';
@@ -665,3 +672,4 @@
   </script>
 </body>
 </html>
+
