@@ -117,6 +117,7 @@
     let roomCode = '';
     let isTimeUp = false;
     let reconnectTimer = null;
+    let isTerminated = false;
 
     function getOrCreateUid() {
       let uid = localStorage.getItem('qb_uid');
@@ -125,6 +126,26 @@
         localStorage.setItem('qb_uid', uid);
       }
       return uid;
+    }
+
+    function resetSessionState() {
+      isTerminated = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      localStorage.removeItem('qb_room');
+      
+      if (conn) { try { conn.close(); } catch(e){} }
+      if (peer) { try { peer.destroy(); } catch(e){} }
+
+      document.getElementById('questionScreen').style.display = 'none';
+      document.getElementById('scoreScreen').style.display = 'none';
+      document.getElementById('endScreen').style.display = 'none';
+      document.getElementById('waitingScreen').style.display = 'none';
+      document.getElementById('joinScreen').style.display = 'block';
+
+      const urlRoom = urlParams.get('room') || urlParams.get('host');
+      if (urlRoom) {
+        document.getElementById('roomInput').value = urlRoom.toUpperCase();
+      }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -151,6 +172,7 @@
     });
 
     function joinGame() {
+      isTerminated = false;
       roomCode = document.getElementById('roomInput').value.trim().toUpperCase();
       playerName = document.getElementById('username').value.trim();
       playerSection = document.getElementById('sectionInput').value.trim();
@@ -168,6 +190,7 @@
     }
 
     function connectToHost() {
+      if (isTerminated) return;
       if (reconnectTimer) clearTimeout(reconnectTimer);
       if (conn) { try { conn.close(); } catch(e){} }
       if (peer) { try { peer.destroy(); } catch(e){} }
@@ -190,6 +213,11 @@
         });
 
         conn.on('data', (data) => {
+          if (data.type === 'session_terminated') {
+            resetSessionState();
+            return;
+          }
+
           if (data.type === 'question') {
             document.getElementById('waitingScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'none';
@@ -240,19 +268,25 @@
         });
 
         conn.on('close', () => {
-          document.getElementById('waitingStatus').innerText = "Reconnecting to Host... 🔄";
-          reconnectTimer = setTimeout(connectToHost, 2000);
+          if (!isTerminated) {
+            document.getElementById('waitingStatus').innerText = "Reconnecting to Host... 🔄";
+            reconnectTimer = setTimeout(connectToHost, 2000);
+          }
         });
 
         conn.on('error', () => {
-          document.getElementById('waitingStatus').innerText = "Retrying Connection... 🔄";
-          reconnectTimer = setTimeout(connectToHost, 2000);
+          if (!isTerminated) {
+            document.getElementById('waitingStatus').innerText = "Retrying Connection... 🔄";
+            reconnectTimer = setTimeout(connectToHost, 2000);
+          }
         });
       });
 
       peer.on('error', () => {
-        document.getElementById('waitingStatus').innerText = "Reconnecting to Host... 🔄";
-        reconnectTimer = setTimeout(connectToHost, 2000);
+        if (!isTerminated) {
+          document.getElementById('waitingStatus').innerText = "Reconnecting to Host... 🔄";
+          reconnectTimer = setTimeout(connectToHost, 2000);
+        }
       });
     }
 
@@ -306,7 +340,7 @@
     }
 
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && playerName && roomCode) {
+      if (document.visibilityState === "visible" && playerName && roomCode && !isTerminated) {
         if (!conn || !conn.open) {
           connectToHost();
         }
