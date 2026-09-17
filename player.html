@@ -121,23 +121,17 @@
     <div id="optionsContainer"></div>
   </div>
 
-  <!-- 1. SEPARATE ANSWER BREAKDOWN / FEEDBACK SCREEN -->
-  <div class="card" id="answerBreakdownScreen" style="display:none;">
+  <!-- COMBINED MERGED SCOREBOARD & ANSWER BREAKDOWN SCREEN -->
+  <div class="card" id="scoreScreen" style="display:none;">
     <div id="resultStatus" class="result-status-banner"></div>
     <h4 id="resultQuestionText" style="margin: 10px 0; color: #e0e0e0; font-size: 16px;"></h4>
     
     <div id="resultOptionsContainer" style="margin-bottom: 15px;"></div>
-    
-    <button class="btn" style="text-align: center; margin-top: 15px;" onclick="showStandingsScreen()">View Leaderboard 📊</button>
-  </div>
 
-  <!-- 2. SEPARATE STANDALONE LEADERBOARD SCREEN -->
-  <div class="card" id="leaderboardScreen" style="display:none;">
-    <h2 style="margin-top: 0; color: #61dafb;">📊 Current Standings</h2>
-    <h3 id="myScoreText" style="color: #fff; font-size: 20px; margin-bottom: 15px; background: #20232a; padding: 10px; border-radius: 8px;">Your Score: 0 pts</h3>
+    <h3 id="myScoreText" style="color: #61dafb; font-size: 22px; margin-bottom: 5px; border-top: 1px solid #555; padding-top: 15px;">Your Total Score: 0 pts</h3>
     
+    <h4 style="margin: 15px 0 5px 0; text-align: left; color: #aaa;">📊 Live Standings</h4>
     <ul class="leaderboard-list" id="playerLeaderboardView"></ul>
-    <p style="color: #aaa; font-size: 14px; margin-top: 15px;"><i>Waiting for host to advance to next question...</i></p>
   </div>
 
   <!-- END GAME / PODIUM SCREEN -->
@@ -167,7 +161,6 @@
 
     let currentQuestionData = null;
     let mySelectedAnswer = null;
-    let cachedScoreboardData = null;
 
     function getOrCreateUid() {
       let uid = localStorage.getItem('qb_uid');
@@ -187,8 +180,7 @@
       if (peer) { try { peer.destroy(); } catch(e){} }
 
       document.getElementById('questionScreen').style.display = 'none';
-      document.getElementById('answerBreakdownScreen').style.display = 'none';
-      document.getElementById('leaderboardScreen').style.display = 'none';
+      document.getElementById('scoreScreen').style.display = 'none';
       document.getElementById('endScreen').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'none';
       document.getElementById('joinScreen').style.display = 'block';
@@ -279,11 +271,9 @@
             currentActiveQuestionIndex = data.qIndex;
             currentQuestionData = data;
             mySelectedAnswer = null;
-            isTimeUp = false;
             
             document.getElementById('waitingScreen').style.display = 'none';
-            document.getElementById('answerBreakdownScreen').style.display = 'none';
-            document.getElementById('leaderboardScreen').style.display = 'none';
+            document.getElementById('scoreScreen').style.display = 'none';
             document.getElementById('endScreen').style.display = 'none';
             document.getElementById('questionScreen').style.display = 'block';
             
@@ -302,18 +292,15 @@
           } else if (data.type === 'scoreboard') {
             isTimeUp = true;
             disableOptions();
-            cachedScoreboardData = data;
 
             document.getElementById('questionScreen').style.display = 'none';
-            document.getElementById('leaderboardScreen').style.display = 'none';
             document.getElementById('endScreen').style.display = 'none';
-            document.getElementById('answerBreakdownScreen').style.display = 'block';
+            document.getElementById('scoreScreen').style.display = 'block';
             
-            renderDetailedResult(data);
+            renderCombinedResult(data);
           } else if (data.type === 'end') {
             document.getElementById('questionScreen').style.display = 'none';
-            document.getElementById('answerBreakdownScreen').style.display = 'none';
-            document.getElementById('leaderboardScreen').style.display = 'none';
+            document.getElementById('scoreScreen').style.display = 'none';
             document.getElementById('waitingScreen').style.display = 'none';
             document.getElementById('endScreen').style.display = 'block';
 
@@ -354,7 +341,7 @@
       }
     }
 
-    function renderDetailedResult(data) {
+    function renderCombinedResult(data) {
       const statusBanner = document.getElementById('resultStatus');
       const questionTextElem = document.getElementById('resultQuestionText');
       const optionsContainer = document.getElementById('resultOptionsContainer');
@@ -408,20 +395,13 @@
           </div>
         `;
       }
-    }
 
-    function showStandingsScreen() {
-      if (!cachedScoreboardData) return;
-      
-      document.getElementById('answerBreakdownScreen').style.display = 'none';
-      document.getElementById('leaderboardScreen').style.display = 'block';
-
-      const me = cachedScoreboardData.leaderboard.find(p => p.name === fullPlayerIdentifier);
+      const me = data.leaderboard.find(p => p.name === fullPlayerIdentifier);
       if (me) {
         document.getElementById('myScoreText').innerText = `Your Total Score: ${me.score} pts`;
       }
 
-      document.getElementById('playerLeaderboardView').innerHTML = cachedScoreboardData.leaderboard.map((p, index) => {
+      document.getElementById('playerLeaderboardView').innerHTML = data.leaderboard.map((p, index) => {
         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
         const isMe = p.name === fullPlayerIdentifier ? 'style="border: 2px solid #61dafb;"' : '';
         return `<li ${isMe}><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
@@ -487,13 +467,21 @@
     });
 
     function renderQuestion(data) {
-      // CLEAR ALL TIME-UP FLAGS FOR NEW QUESTION
-      isTimeUp = false;
-      document.getElementById('playerTimesUp').style.display = 'none';
-
       currentMaxTimer = data.timerDuration || 10;
       const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
-      updatePlayerTimerUI(startSeconds);
+      
+      // CHECK IF HOST REPORTED LCKED QUESTION (E.G. ON PAGE REFRESH)
+      isTimeUp = (data.isLocked === true || startSeconds <= 0);
+
+      const timesUpBanner = document.getElementById('playerTimesUp');
+
+      if (isTimeUp) {
+        timesUpBanner.style.display = 'block';
+        updatePlayerTimerUI(0);
+      } else {
+        timesUpBanner.style.display = 'none';
+        updatePlayerTimerUI(startSeconds);
+      }
 
       if (data.qRoundIndex && data.qRoundTotal) {
         document.getElementById('playerQCounter').innerText = `${data.qRoundName || 'Question'}: ${data.qRoundIndex} of ${data.qRoundTotal}`;
@@ -514,11 +502,16 @@
         const textInput = document.createElement('input');
         textInput.type = 'text';
         textInput.className = 'text-input-field';
-        textInput.placeholder = 'Type your answer...';
+        textInput.placeholder = isTimeUp ? 'Time is up!' : 'Type your answer...';
         textInput.id = 'typedAnswerBox';
-        textInput.disabled = false;
-        textInput.removeAttribute('disabled');
-        textInput.style.pointerEvents = 'auto';
+        textInput.disabled = isTimeUp;
+        if (isTimeUp) {
+          textInput.setAttribute('disabled', 'true');
+          textInput.style.pointerEvents = 'none';
+        } else {
+          textInput.removeAttribute('disabled');
+          textInput.style.pointerEvents = 'auto';
+        }
 
         textInput.oninput = () => {
           if (isTimeUp) return;
@@ -534,10 +527,14 @@
           btn.className = 'btn';
           btn.innerText = `${letters[idx]}. ${opt}`;
           
-          // HARD UNLOCK BUTTON ATTRIBUTES FOR FRESH QUESTION
-          btn.disabled = false;
-          btn.removeAttribute('disabled');
-          btn.style.pointerEvents = 'auto';
+          btn.disabled = isTimeUp;
+          if (isTimeUp) {
+            btn.setAttribute('disabled', 'true');
+            btn.style.pointerEvents = 'none';
+          } else {
+            btn.removeAttribute('disabled');
+            btn.style.pointerEvents = 'auto';
+          }
           
           btn.onclick = () => {
             if (isTimeUp) return;
@@ -553,7 +550,6 @@
       }
     }
 
-    // LOCKS ALL OPTION BUTTONS AND TEXT INPUTS
     function disableOptions() {
       document.querySelectorAll('#optionsContainer .btn').forEach(b => {
         b.disabled = true;
