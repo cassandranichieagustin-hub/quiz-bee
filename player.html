@@ -13,11 +13,10 @@
     .section-field { display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; margin-bottom: 12px; }
     .section-field input { width: 140px; margin: 0 0 0 8px; padding: 8px; border-bottom: 2px solid #61dafb; border-radius: 0; background: transparent; color: white; font-weight: bold; }
     
-    /* Interactive Button Styling */
     .btn { 
       background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; 
       font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; 
-      transition: all 0.2s ease; pointer-events: auto !important; 
+      transition: all 0.2s ease; pointer-events: auto; 
     }
     .btn.selected { background: #007bff !important; color: white !important; transform: scale(1.02); box-shadow: 0 0 10px rgba(0,123,255,0.5); }
     .btn:disabled { background: #555 !important; color: #aaa !important; cursor: not-allowed !important; pointer-events: none !important; opacity: 0.6; }
@@ -35,7 +34,6 @@
     .result-correct-bg { background: #28a745; color: white; }
     .result-wrong-bg { background: #dc3545; color: white; }
 
-    /* Results options display */
     .result-option {
       background: #20232a;
       color: #fff;
@@ -63,7 +61,7 @@
 
     #qText { font-size: 20px; margin: 15px 0; color: #fff; line-height: 1.4; }
     
-    .text-input-field { background: #fff; color: #333; font-size: 18px; font-weight: bold; padding: 14px; border-radius: 8px; width: 90%; border: none; margin-bottom: 10px; pointer-events: auto !important; }
+    .text-input-field { background: #fff; color: #333; font-size: 18px; font-weight: bold; padding: 14px; border-radius: 8px; width: 90%; border: none; margin-bottom: 10px; pointer-events: auto; }
     .text-input-field:disabled { background: #555 !important; opacity: 0.6; pointer-events: none !important; }
 
     .times-up-banner {
@@ -123,18 +121,23 @@
     <div id="optionsContainer"></div>
   </div>
 
-  <!-- SCOREBOARD WAIT & RESULT FEEDBACK SCREEN -->
-  <div class="card" id="scoreScreen" style="display:none;">
+  <!-- 1. SEPARATE ANSWER BREAKDOWN / FEEDBACK SCREEN -->
+  <div class="card" id="answerBreakdownScreen" style="display:none;">
     <div id="resultStatus" class="result-status-banner"></div>
     <h4 id="resultQuestionText" style="margin: 10px 0; color: #e0e0e0; font-size: 16px;"></h4>
     
-    <!-- Render options breakdown here -->
-    <div id="resultOptionsContainer" style="margin-bottom: 20px;"></div>
-
-    <h3 id="myScoreText" style="color: #61dafb; font-size: 22px; margin-bottom: 5px; border-top: 1px solid #555; padding-top: 15px;">Your Score: 0 pts</h3>
+    <div id="resultOptionsContainer" style="margin-bottom: 15px;"></div>
     
-    <h4 style="margin: 15px 0 5px 0; text-align: left; color: #aaa;">📊 Current Leaderboard</h4>
+    <button class="btn" style="text-align: center; margin-top: 15px;" onclick="showStandingsScreen()">View Leaderboard 📊</button>
+  </div>
+
+  <!-- 2. SEPARATE STANDALONE LEADERBOARD SCREEN -->
+  <div class="card" id="leaderboardScreen" style="display:none;">
+    <h2 style="margin-top: 0; color: #61dafb;">📊 Current Standings</h2>
+    <h3 id="myScoreText" style="color: #fff; font-size: 20px; margin-bottom: 15px; background: #20232a; padding: 10px; border-radius: 8px;">Your Score: 0 pts</h3>
+    
     <ul class="leaderboard-list" id="playerLeaderboardView"></ul>
+    <p style="color: #aaa; font-size: 14px; margin-top: 15px;"><i>Waiting for host to advance to next question...</i></p>
   </div>
 
   <!-- END GAME / PODIUM SCREEN -->
@@ -162,9 +165,9 @@
     let currentMaxTimer = 10;
     let currentActiveQuestionIndex = -1;
 
-    // Cache current question state locally for detailed result rendering
     let currentQuestionData = null;
     let mySelectedAnswer = null;
+    let cachedScoreboardData = null;
 
     function getOrCreateUid() {
       let uid = localStorage.getItem('qb_uid');
@@ -184,7 +187,8 @@
       if (peer) { try { peer.destroy(); } catch(e){} }
 
       document.getElementById('questionScreen').style.display = 'none';
-      document.getElementById('scoreScreen').style.display = 'none';
+      document.getElementById('answerBreakdownScreen').style.display = 'none';
+      document.getElementById('leaderboardScreen').style.display = 'none';
       document.getElementById('endScreen').style.display = 'none';
       document.getElementById('waitingScreen').style.display = 'none';
       document.getElementById('joinScreen').style.display = 'block';
@@ -274,20 +278,21 @@
           if (data.type === 'question') {
             currentActiveQuestionIndex = data.qIndex;
             currentQuestionData = data;
-            mySelectedAnswer = null; // Clear previous answer state
+            mySelectedAnswer = null;
             isTimeUp = false;
             
             document.getElementById('waitingScreen').style.display = 'none';
-            document.getElementById('scoreScreen').style.display = 'none';
+            document.getElementById('answerBreakdownScreen').style.display = 'none';
+            document.getElementById('leaderboardScreen').style.display = 'none';
             document.getElementById('endScreen').style.display = 'none';
             document.getElementById('questionScreen').style.display = 'block';
             
             renderQuestion(data);
           } else if (data.type === 'tick') {
-            if (data.qIndex === currentActiveQuestionIndex) {
+            if (data.qIndex === currentActiveQuestionIndex && !isTimeUp) {
               updatePlayerTimerUI(data.time);
             }
-          } else if (data.type === 'timeOut') {
+          } else if (data.type === 'timeOut' || data.type === 'lockInputs') {
             if (data.qIndex === currentActiveQuestionIndex) {
               isTimeUp = true;
               updatePlayerTimerUI(0);
@@ -296,14 +301,19 @@
             }
           } else if (data.type === 'scoreboard') {
             isTimeUp = true;
+            disableOptions();
+            cachedScoreboardData = data;
+
             document.getElementById('questionScreen').style.display = 'none';
+            document.getElementById('leaderboardScreen').style.display = 'none';
             document.getElementById('endScreen').style.display = 'none';
-            document.getElementById('scoreScreen').style.display = 'block';
+            document.getElementById('answerBreakdownScreen').style.display = 'block';
             
             renderDetailedResult(data);
           } else if (data.type === 'end') {
             document.getElementById('questionScreen').style.display = 'none';
-            document.getElementById('scoreScreen').style.display = 'none';
+            document.getElementById('answerBreakdownScreen').style.display = 'none';
+            document.getElementById('leaderboardScreen').style.display = 'none';
             document.getElementById('waitingScreen').style.display = 'none';
             document.getElementById('endScreen').style.display = 'block';
 
@@ -365,7 +375,6 @@
 
       optionsContainer.innerHTML = '';
 
-      // Detailed Multiple Choice options breakdown
       if (currentQuestionData && currentQuestionData.qType !== 'text' && currentQuestionData.options) {
         const letters = ['A', 'B', 'C', 'D'];
         currentQuestionData.options.forEach((optText, idx) => {
@@ -373,10 +382,7 @@
           let classList = 'result-option';
           let badgeText = '';
 
-          // Determine if this is user's answer or correct answer
           const isUserChoice = (mySelectedAnswer === idx);
-          
-          // Match index to host's correct display
           const isCorrectChoice = data.correctAnswerText && data.correctAnswerText.startsWith(`${letters[idx]}.`);
 
           if (isCorrectChoice) {
@@ -392,8 +398,7 @@
           optionsContainer.appendChild(optDiv);
         });
       } else {
-        // Identification / Text input result breakdown
-        const givenText = (mySelectedAnswer !== null && mySelectedAnswer !== undefined) ? mySelectedAnswer : '<i>No answer</i>';
+        const givenText = (mySelectedAnswer !== null && mySelectedAnswer !== undefined && mySelectedAnswer !== '') ? mySelectedAnswer : '<i>No answer</i>';
         optionsContainer.innerHTML = `
           <div class="result-option opt-wrong" style="margin-bottom:6px;">
             <span>Your Answer: <b>${givenText}</b></span>
@@ -403,15 +408,20 @@
           </div>
         `;
       }
+    }
 
-      // Update total score
-      const me = data.leaderboard.find(p => p.name === fullPlayerIdentifier);
+    function showStandingsScreen() {
+      if (!cachedScoreboardData) return;
+      
+      document.getElementById('answerBreakdownScreen').style.display = 'none';
+      document.getElementById('leaderboardScreen').style.display = 'block';
+
+      const me = cachedScoreboardData.leaderboard.find(p => p.name === fullPlayerIdentifier);
       if (me) {
         document.getElementById('myScoreText').innerText = `Your Total Score: ${me.score} pts`;
       }
 
-      // Leaderboard view
-      document.getElementById('playerLeaderboardView').innerHTML = data.leaderboard.map((p, index) => {
+      document.getElementById('playerLeaderboardView').innerHTML = cachedScoreboardData.leaderboard.map((p, index) => {
         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
         const isMe = p.name === fullPlayerIdentifier ? 'style="border: 2px solid #61dafb;"' : '';
         return `<li ${isMe}><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
@@ -477,6 +487,7 @@
     });
 
     function renderQuestion(data) {
+      // CLEAR ALL TIME-UP FLAGS FOR NEW QUESTION
       isTimeUp = false;
       document.getElementById('playerTimesUp').style.display = 'none';
 
@@ -507,6 +518,7 @@
         textInput.id = 'typedAnswerBox';
         textInput.disabled = false;
         textInput.removeAttribute('disabled');
+        textInput.style.pointerEvents = 'auto';
 
         textInput.oninput = () => {
           if (isTimeUp) return;
@@ -521,8 +533,11 @@
           const btn = document.createElement('button');
           btn.className = 'btn';
           btn.innerText = `${letters[idx]}. ${opt}`;
+          
+          // HARD UNLOCK BUTTON ATTRIBUTES FOR FRESH QUESTION
           btn.disabled = false;
           btn.removeAttribute('disabled');
+          btn.style.pointerEvents = 'auto';
           
           btn.onclick = () => {
             if (isTimeUp) return;
@@ -530,7 +545,7 @@
             document.querySelectorAll('#optionsContainer .btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
 
-            mySelectedAnswer = idx; // Cache user choice
+            mySelectedAnswer = idx;
             conn.send({ type: 'answer', option: idx });
           };
           container.appendChild(btn);
@@ -538,15 +553,18 @@
       }
     }
 
+    // LOCKS ALL OPTION BUTTONS AND TEXT INPUTS
     function disableOptions() {
       document.querySelectorAll('#optionsContainer .btn').forEach(b => {
         b.disabled = true;
         b.setAttribute('disabled', 'true');
+        b.style.pointerEvents = 'none';
       });
       const textInput = document.getElementById('typedAnswerBox');
       if (textInput) {
         textInput.disabled = true;
         textInput.setAttribute('disabled', 'true');
+        textInput.style.pointerEvents = 'none';
       }
     }
   </script>
