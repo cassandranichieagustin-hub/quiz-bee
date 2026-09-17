@@ -127,8 +127,25 @@
 
   <script>
     let ROOM_CODE = "";
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function prepareShuffledSet(rawSet) {
+      const easy = shuffleArray(rawSet.filter(q => q.round === "Easy Round"));
+      const moderate = shuffleArray(rawSet.filter(q => q.round === "Moderate Round"));
+      const difficult = shuffleArray(rawSet.filter(q => q.round === "Difficult Round"));
+      const clincher = shuffleArray(rawSet.filter(q => q.round === "Clincher Round"));
+      return [...easy, ...moderate, ...difficult, ...clincher];
+    }
     
-    const questionBank = {
+    const rawQuestionBank = {
       1: [
         // Easy Round (10s, 1pt, MC)
         { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which quantity describes rotational motion rather than translational motion?", options: ["Linear velocity", "Angular velocity", "Displacement", "Acceleration"], answer: 1 },
@@ -248,7 +265,7 @@
       ]
     };
 
-    let questions = questionBank[1];
+    let questions = prepareShuffledSet(rawQuestionBank[1]);
     let peer = null;
     let currentQuestion = -1;
     let stepState = 'lobby'; 
@@ -261,7 +278,7 @@
 
     function switchQuestionSet() {
       const selectedSet = document.getElementById('setSelect').value;
-      questions = questionBank[selectedSet];
+      questions = prepareShuffledSet(rawQuestionBank[selectedSet]);
     }
 
     function initHostSession() {
@@ -280,6 +297,8 @@
       currentQuestion = -1;
       stepState = 'lobby';
       inClincherMode = false;
+
+      switchQuestionSet();
       updatePlayerLists();
 
       ROOM_CODE = "QUIZ" + Math.floor(1000 + Math.random() * 9000);
@@ -435,23 +454,20 @@
 
       if (stepState === 'lobby' || stepState === 'scoreboard' || stepState === 'roundDivider') {
         
-        // At End of Main Game (Q24 - 25th question)
         if (currentQuestion === 24) {
           if (checkTieForFirst()) {
             inClincherMode = true;
             document.getElementById('tieAlert').style.display = 'block';
-            currentQuestion = 25; // Move to Clincher 1
+            currentQuestion = 25; 
             stepState = 'question';
             showQuestion();
             return;
           } else {
-            // Winner declared, skip clincher!
             showFinalWinner();
             return;
           }
         }
 
-        // In Clincher Mode (Questions 25-29)
         if (inClincherMode && currentQuestion >= 25) {
           if (checkTieForFirst() && currentQuestion < questions.length - 1) {
             currentQuestion++;
@@ -464,7 +480,6 @@
           }
         }
 
-        // Standard Progression (Easy, Moderate, Difficult)
         if (currentQuestion < 24) {
           currentQuestion++;
           stepState = 'question';
