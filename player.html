@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Quiz Bee - Player</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -16,7 +16,7 @@
     .btn { 
       background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; 
       font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; 
-      transition: all 0.2s ease; user-select: none; -webkit-user-select: none; touch-action: manipulation;
+      transition: all 0.2s ease; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
     }
     .btn.selected { background: #007bff !important; color: white !important; transform: scale(1.02); box-shadow: 0 0 10px rgba(0,123,255,0.5); }
     .btn:disabled { background: #555 !important; color: #aaa !important; cursor: not-allowed !important; opacity: 0.6; }
@@ -456,10 +456,11 @@
     }
 
     function renderQuestion(data) {
-      isTimeUp = false; // Mandatory Reset
+      // Force unfreeze state on new question
+      isTimeUp = false;
       currentMaxTimer = data.timerDuration || 10;
       
-      const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
+      const startSeconds = (data.currentTimeLeft !== undefined && data.currentTimeLeft > 0) ? data.currentTimeLeft : currentMaxTimer;
       const timesUpBanner = document.getElementById('playerTimesUp');
 
       timesUpBanner.style.display = 'none';
@@ -478,7 +479,6 @@
       document.getElementById('qText').innerText = data.question;
       
       const container = document.getElementById('optionsContainer');
-      container.style.pointerEvents = 'auto';
       container.innerHTML = '';
 
       if (data.qType === 'text') {
@@ -487,6 +487,7 @@
         textInput.className = 'text-input-field';
         textInput.placeholder = 'Type your answer...';
         textInput.id = 'typedAnswerBox';
+        textInput.disabled = false;
         
         textInput.oninput = () => {
           if (isTimeUp) return;
@@ -504,14 +505,18 @@
           btn.className = 'btn';
           btn.id = `opt_btn_${idx}`;
           btn.innerText = `${letters[idx]}. ${opt}`;
+          btn.disabled = false;
           
-          btn.onclick = () => selectOption(idx);
+          btn.onclick = (e) => {
+            e.preventDefault();
+            selectOption(idx);
+          };
 
           container.appendChild(btn);
         });
       }
 
-      if (data.isLocked === true || startSeconds <= 0) {
+      if (data.isLocked === true) {
         disableOptions();
       }
     }
@@ -520,9 +525,6 @@
       isTimeUp = true;
       document.getElementById('playerTimesUp').style.display = 'block';
       updatePlayerTimerUI(0);
-
-      const container = document.getElementById('optionsContainer');
-      if (container) container.style.pointerEvents = 'none';
 
       document.querySelectorAll('#optionsContainer .btn').forEach(b => {
         b.disabled = true;
