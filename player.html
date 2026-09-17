@@ -16,7 +16,7 @@
     .btn { 
       background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; 
       font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; 
-      transition: all 0.2s ease; pointer-events: auto; 
+      transition: all 0.2s ease; pointer-events: auto; user-select: none; -webkit-tap-highlight-color: transparent;
     }
     .btn.selected { background: #007bff !important; color: white !important; transform: scale(1.02); box-shadow: 0 0 10px rgba(0,123,255,0.5); }
     .btn:disabled { background: #555 !important; color: #aaa !important; cursor: not-allowed !important; pointer-events: none !important; opacity: 0.6; }
@@ -121,7 +121,7 @@
     <div id="optionsContainer"></div>
   </div>
 
-  <!-- COMBINED MERGED SCOREBOARD & ANSWER BREAKDOWN SCREEN -->
+  <!-- COMBINED SCOREBOARD & ANSWER BREAKDOWN SCREEN -->
   <div class="card" id="scoreScreen" style="display:none;">
     <div id="resultStatus" class="result-status-banner"></div>
     <h4 id="resultQuestionText" style="margin: 10px 0; color: #e0e0e0; font-size: 16px;"></h4>
@@ -466,11 +466,24 @@
       }
     });
 
+    function selectOption(idx) {
+      if (isTimeUp) return;
+
+      document.querySelectorAll('#optionsContainer .btn').forEach(b => b.classList.remove('selected'));
+      const activeBtn = document.getElementById(`opt_btn_${idx}`);
+      if (activeBtn) activeBtn.classList.add('selected');
+
+      mySelectedAnswer = idx;
+      if (conn && conn.open) {
+        conn.send({ type: 'answer', option: idx, qIndex: currentActiveQuestionIndex });
+      }
+    }
+
     function renderQuestion(data) {
       currentMaxTimer = data.timerDuration || 10;
       const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
       
-      // CHECK IF HOST REPORTED LCKED QUESTION (E.G. ON PAGE REFRESH)
+      // Strict question state evaluation
       isTimeUp = (data.isLocked === true || startSeconds <= 0);
 
       const timesUpBanner = document.getElementById('playerTimesUp');
@@ -496,6 +509,7 @@
       document.getElementById('qText').innerText = data.question;
       
       const container = document.getElementById('optionsContainer');
+      container.style.pointerEvents = 'auto';
       container.innerHTML = '';
 
       if (data.qType === 'text') {
@@ -505,6 +519,7 @@
         textInput.placeholder = isTimeUp ? 'Time is up!' : 'Type your answer...';
         textInput.id = 'typedAnswerBox';
         textInput.disabled = isTimeUp;
+        
         if (isTimeUp) {
           textInput.setAttribute('disabled', 'true');
           textInput.style.pointerEvents = 'none';
@@ -516,7 +531,9 @@
         textInput.oninput = () => {
           if (isTimeUp) return;
           mySelectedAnswer = textInput.value;
-          conn.send({ type: 'answer', option: textInput.value });
+          if (conn && conn.open) {
+            conn.send({ type: 'answer', option: textInput.value, qIndex: currentActiveQuestionIndex });
+          }
         };
 
         container.appendChild(textInput);
@@ -525,6 +542,7 @@
         data.options.forEach((opt, idx) => {
           const btn = document.createElement('button');
           btn.className = 'btn';
+          btn.id = `opt_btn_${idx}`;
           btn.innerText = `${letters[idx]}. ${opt}`;
           
           btn.disabled = isTimeUp;
@@ -536,21 +554,26 @@
             btn.style.pointerEvents = 'auto';
           }
           
-          btn.onclick = () => {
-            if (isTimeUp) return;
-
-            document.querySelectorAll('#optionsContainer .btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-
-            mySelectedAnswer = idx;
-            conn.send({ type: 'answer', option: idx });
+          btn.onclick = (e) => {
+            e.preventDefault();
+            selectOption(idx);
           };
+
+          btn.ontouchstart = (e) => {
+            e.preventDefault();
+            selectOption(idx);
+          };
+
           container.appendChild(btn);
         });
       }
     }
 
     function disableOptions() {
+      isTimeUp = true;
+      const container = document.getElementById('optionsContainer');
+      if (container) container.style.pointerEvents = 'none';
+
       document.querySelectorAll('#optionsContainer .btn').forEach(b => {
         b.disabled = true;
         b.setAttribute('disabled', 'true');
