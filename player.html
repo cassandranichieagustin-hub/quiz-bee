@@ -12,25 +12,31 @@
     input[type="text"] { width: 85%; padding: 12px; margin-bottom: 12px; border-radius: 6px; border: none; font-size: 16px; text-align: center; }
     .section-field { display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; margin-bottom: 12px; }
     .section-field input { width: 140px; margin: 0 0 0 8px; padding: 8px; border-bottom: 2px solid #61dafb; border-radius: 0; background: transparent; color: white; font-weight: bold; }
-    .btn { background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.2s ease; pointer-events: auto !important; }
+    
+    /* Interactive Button Styling */
+    .btn { 
+      background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; 
+      font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; 
+      transition: all 0.2s ease; pointer-events: auto !important; 
+    }
     .btn.selected { background: #007bff !important; color: white !important; transform: scale(1.02); box-shadow: 0 0 10px rgba(0,123,255,0.5); }
-    .btn:disabled { background: #666 !important; cursor: not-allowed; pointer-events: none !important; transform: none; box-shadow: none; }
+    .btn:disabled { background: #555 !important; color: #aaa !important; cursor: not-allowed !important; pointer-events: none !important; opacity: 0.6; }
+
     .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
     .clincher-bar { background: #6f42c1; color: white; }
-    
     .q-counter-badge { font-size: 15px; font-weight: bold; color: #61dafb; margin-bottom: 6px; }
 
     .timer-container { margin: 10px 0 15px 0; }
     .timer-badge { font-size: 22px; font-weight: bold; color: #ff6b6b; margin-bottom: 6px; }
     .progress-bar-bg { background: #20232a; height: 12px; border-radius: 10px; overflow: hidden; width: 100%; }
-    .progress-bar-fill { background: #28a745; height: 100%; width: 100%; transition: width 1s linear, background-color 0.5s ease; }
+    .progress-bar-fill { background: #28a745; height: 100%; width: 100%; transition: width 0.3s linear, background-color 0.3s ease; }
     
     .result-correct { background: #28a745; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
     .result-wrong { background: #dc3545; color: white; padding: 15px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
     #qText { font-size: 20px; margin: 15px 0; color: #fff; line-height: 1.4; }
     
     .text-input-field { background: #fff; color: #333; font-size: 18px; font-weight: bold; padding: 14px; border-radius: 8px; width: 90%; border: none; margin-bottom: 10px; pointer-events: auto !important; }
-    .text-input-field:disabled { background: #666 !important; pointer-events: none !important; }
+    .text-input-field:disabled { background: #555 !important; opacity: 0.6; pointer-events: none !important; }
 
     .times-up-banner {
       display: none; font-size: 26px; font-weight: 900; color: #ff4d4d; letter-spacing: 2px; margin: 10px 0;
@@ -121,7 +127,7 @@
     let reconnectTimer = null;
     let isTerminated = false;
     let currentMaxTimer = 10;
-    let currentQuestionIndex = -1;
+    let currentActiveQuestionIndex = -1; // Strict Question Tracking
 
     function getOrCreateUid() {
       let uid = localStorage.getItem('qb_uid');
@@ -220,6 +226,9 @@
           document.getElementById('waitingStatus').innerText = "Connected! 🚀";
         });
 
+        // Wipes previous listener stack to prevent duplicate event handling
+        conn.off('data');
+
         conn.on('data', (data) => {
           if (data.type === 'session_terminated') {
             resetSessionState();
@@ -227,19 +236,24 @@
           }
 
           if (data.type === 'question') {
+            // Unlocks interface completely for the incoming question
+            currentActiveQuestionIndex = data.qIndex;
+            isTimeUp = false;
+            
             document.getElementById('waitingScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'none';
             document.getElementById('endScreen').style.display = 'none';
             document.getElementById('questionScreen').style.display = 'block';
+            
             renderQuestion(data);
           } else if (data.type === 'tick') {
-            // STRICT INDEX CHECK: Discard ticks from past/future questions
-            if (data.qIndex === currentQuestionIndex) {
+            // IGNORE tick if it belongs to an old or mismatched question
+            if (data.qIndex === currentActiveQuestionIndex) {
               updatePlayerTimerUI(data.time);
             }
           } else if (data.type === 'timeOut') {
-            // STRICT INDEX CHECK: Only trigger timeOut if it matches the current active question
-            if (data.qIndex === currentQuestionIndex) {
+            // IGNORE timeOut if it belongs to an old or mismatched question
+            if (data.qIndex === currentActiveQuestionIndex) {
               isTimeUp = true;
               updatePlayerTimerUI(0);
               document.getElementById('playerTimesUp').style.display = 'block';
@@ -372,10 +386,9 @@
     });
 
     function renderQuestion(data) {
-      // 1. Force state reset
+      // FORCE CLEAR "TIME'S UP!" BANNER AND LOCKS
       isTimeUp = false;
       document.getElementById('playerTimesUp').style.display = 'none';
-      currentQuestionIndex = data.qIndex;
 
       currentMaxTimer = data.timerDuration || 10;
       const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
@@ -393,7 +406,7 @@
 
       document.getElementById('qText').innerText = data.question;
       
-      // 2. Clear out options container & re-enable buttons
+      // Complete DOM rebuild for buttons
       const container = document.getElementById('optionsContainer');
       container.innerHTML = '';
 
@@ -431,13 +444,6 @@
           };
           container.appendChild(btn);
         });
-      }
-
-      // Only lock if the question actually started with 0 seconds left
-      if (startSeconds <= 0) {
-        isTimeUp = true;
-        document.getElementById('playerTimesUp').style.display = 'block';
-        disableOptions();
       }
     }
 
