@@ -261,6 +261,7 @@
     let timerInterval = null;
     let timeLeft = 10;
     let isQuestionLocked = false;
+    let timerEndTime = 0;
 
     function switchQuestionSet() {
       const selectedSet = document.getElementById('setSelect').value;
@@ -284,6 +285,7 @@
       stepState = 'lobby';
       inClincherMode = false;
       isQuestionLocked = false;
+      timerEndTime = 0;
 
       switchQuestionSet();
       updatePlayerLists();
@@ -328,7 +330,11 @@
               sendScoreboardToPlayer(conn);
             }
           } else if (data.type === 'answer') {
-            if (!isQuestionLocked && conn.playerUid && data.qIndex === currentQuestion) {
+            // STRICT SERVER-SIDE EVALUATION OF TIMING
+            const now = Date.now();
+            const timeIsExpired = isQuestionLocked || (timerEndTime > 0 && now >= timerEndTime);
+
+            if (!timeIsExpired && conn.playerUid && data.qIndex === currentQuestion) {
               playerAnswers[conn.playerUid] = data.option;
             }
           }
@@ -369,23 +375,27 @@
       clearInterval(timerInterval);
       timeLeft = duration;
       isQuestionLocked = false;
+      timerEndTime = Date.now() + (duration * 1000);
+      
       updateTimerUI(timeLeft, duration);
       document.getElementById('hostTimesUp').style.display = 'none';
 
       const activeQIndex = currentQuestion;
 
       timerInterval = setInterval(() => {
-        timeLeft--;
+        const remainingMs = timerEndTime - Date.now();
+        timeLeft = Math.max(0, Math.ceil(remainingMs / 1000));
+        
         updateTimerUI(timeLeft, duration);
-        broadcast({ type: 'tick', time: timeLeft, qIndex: activeQIndex });
+        broadcast({ type: 'tick', time: timeLeft, qIndex: activeQIndex, timerEndTime: timerEndTime });
 
-        if (timeLeft <= 0) {
+        if (timeLeft <= 0 || remainingMs <= 0) {
           clearInterval(timerInterval);
           isQuestionLocked = true;
           revealHostCorrectAnswer();
           broadcast({ type: 'timeOut', qIndex: activeQIndex });
         }
-      }, 1000);
+      }, 500);
     }
 
     function revealHostCorrectAnswer() {
@@ -511,6 +521,9 @@
       const q = questions[currentQuestion];
       const roundMeta = getRoundSpecificIndex(currentQuestion);
       const duration = q.timer || 10;
+      
+      const remainingSecs = Math.max(0, Math.ceil((timerEndTime - Date.now()) / 1000));
+      const lockedState = isQuestionLocked || (timerEndTime > 0 && Date.now() >= timerEndTime);
 
       conn.send({
         type: 'question',
@@ -523,9 +536,10 @@
         qRoundIndex: roundMeta.index,
         qRoundTotal: roundMeta.total,
         qRoundName: roundMeta.name,
-        currentTimeLeft: timeLeft,
+        currentTimeLeft: remainingSecs,
         timerDuration: duration,
-        isLocked: isQuestionLocked
+        timerEndTime: timerEndTime,
+        isLocked: lockedState
       });
     }
 
@@ -671,4 +685,3 @@
   </script>
 </body>
 </html>
-
