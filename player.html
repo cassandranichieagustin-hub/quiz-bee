@@ -233,11 +233,13 @@
             document.getElementById('questionScreen').style.display = 'block';
             renderQuestion(data);
           } else if (data.type === 'tick') {
-            if (data.qIndex === undefined || data.qIndex === currentQuestionIndex) {
+            // STRICT INDEX CHECK: Discard ticks from past/future questions
+            if (data.qIndex === currentQuestionIndex) {
               updatePlayerTimerUI(data.time);
             }
           } else if (data.type === 'timeOut') {
-            if (data.qIndex === undefined || data.qIndex === currentQuestionIndex) {
+            // STRICT INDEX CHECK: Only trigger timeOut if it matches the current active question
+            if (data.qIndex === currentQuestionIndex) {
               isTimeUp = true;
               updatePlayerTimerUI(0);
               document.getElementById('playerTimesUp').style.display = 'block';
@@ -370,7 +372,7 @@
     });
 
     function renderQuestion(data) {
-      // 1. Force explicit reset of time-up flags
+      // 1. Force state reset
       isTimeUp = false;
       document.getElementById('playerTimesUp').style.display = 'none';
       currentQuestionIndex = data.qIndex;
@@ -391,7 +393,7 @@
 
       document.getElementById('qText').innerText = data.question;
       
-      // 2. Destroy and recreate input nodes to guarantee fresh listener attachments
+      // 2. Clear out options container & re-enable buttons
       const container = document.getElementById('optionsContainer');
       container.innerHTML = '';
 
@@ -431,6 +433,7 @@
         });
       }
 
+      // Only lock if the question actually started with 0 seconds left
       if (startSeconds <= 0) {
         isTimeUp = true;
         document.getElementById('playerTimesUp').style.display = 'block';
@@ -452,4 +455,3 @@
   </script>
 </body>
 </html>
-
