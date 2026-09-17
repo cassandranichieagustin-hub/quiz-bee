@@ -142,14 +142,19 @@
       document.getElementById('waitingScreen').style.display = 'none';
       document.getElementById('joinScreen').style.display = 'block';
 
-      const urlRoom = urlParams.get('room') || urlParams.get('host');
-      if (urlRoom) {
-        document.getElementById('roomInput').value = urlRoom.toUpperCase();
+      if (roomFromUrl) {
+        document.getElementById('roomInput').value = roomFromUrl.toUpperCase();
       }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
       playerUid = getOrCreateUid();
+      
+      // Scanned fresh QR code parameter overrides old local storage
+      if (roomFromUrl) {
+        localStorage.setItem('qb_room', roomFromUrl.toUpperCase());
+      }
+
       const savedRoom = roomFromUrl || localStorage.getItem('qb_room');
       const savedName = localStorage.getItem('qb_name');
       const savedSection = localStorage.getItem('qb_section') || '';
@@ -158,7 +163,7 @@
         document.getElementById('roomInput').value = savedRoom.toUpperCase();
       }
 
-      if (savedRoom && savedName) {
+      if (savedRoom && savedName && !isTerminated) {
         roomCode = savedRoom.trim().toUpperCase();
         playerName = savedName.trim();
         playerSection = savedSection.trim();
