@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quiz Bee - Player</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #282c34; color: white; margin: 0; padding: 20px; }
     .card { background: #3b4049; max-width: 400px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
@@ -17,6 +18,8 @@
     .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
     .clincher-bar { background: #6f42c1; color: white; }
     
+    .q-counter-badge { font-size: 14px; font-weight: bold; color: #aaa; margin-bottom: 4px; }
+
     .timer-container { margin: 10px 0 15px 0; }
     .timer-badge { font-size: 22px; font-weight: bold; color: #ff6b6b; margin-bottom: 6px; }
     .progress-bar-bg { background: #20232a; height: 12px; border-radius: 10px; overflow: hidden; width: 100%; }
@@ -75,6 +78,7 @@
 
   <!-- QUESTION SCREEN -->
   <div class="card" id="questionScreen" style="display:none;">
+    <div class="q-counter-badge" id="playerQCounter">Question 1 of 30</div>
     <div class="info-bar" id="roundInfo">Round 1</div>
     
     <div class="timer-container">
@@ -297,6 +301,16 @@
       });
     }
 
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
     function showFinalPlacement(leaderboard) {
       const myRankIndex = leaderboard.findIndex(p => p.name === fullPlayerIdentifier);
       const myScore = leaderboard[myRankIndex] ? leaderboard[myRankIndex].score : 0;
@@ -307,6 +321,7 @@
       if (myRankIndex === 0) {
         banner.className = 'place-1st';
         banner.innerHTML = '🥇 CONGRATULATIONS!<br>YOU PLACED 1ST PLACE! 🏆';
+        triggerConfetti();
       } else if (myRankIndex === 1) {
         banner.className = 'place-2nd';
         banner.innerHTML = '🥈 CONGRATULATIONS!<br>YOU PLACED 2ND PLACE! 🎉';
@@ -358,6 +373,12 @@
       currentMaxTimer = data.timerDuration || 10;
       const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
       updatePlayerTimerUI(startSeconds);
+
+      if (data.qIndex && data.qTotal) {
+        document.getElementById('playerQCounter').innerText = `Question ${data.qIndex} of ${data.qTotal}`;
+      } else {
+        document.getElementById('playerQCounter').innerText = '';
+      }
 
       const infoBar = document.getElementById('roundInfo');
       infoBar.innerText = `${data.round.toUpperCase()} • ${data.points} PT${data.points > 1 ? 'S' : ''}`;
