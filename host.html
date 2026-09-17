@@ -55,9 +55,9 @@
     
     <label for="setSelect" style="font-weight: bold; font-size: 18px;">Select Question Set:</label><br>
     <select id="setSelect" class="set-select" onchange="switchQuestionSet()">
-      <option value="1">Set 1: General Science Fundamentals</option>
-      <option value="2">Set 2: Applied Physical Concepts</option>
-      <option value="3">Set 3: Integrated Physics & Household Chem</option>
+      <option value="1">Set 1: Mixed Science Topics</option>
+      <option value="2">Set 2: Applied Physics & Household Chem</option>
+      <option value="3">Set 3: Integrated Term 1 Science</option>
     </select>
 
     <p>Scan the QR Code using the provided device to join:</p>
@@ -81,7 +81,7 @@
     <div><span class="badge" id="roundBadge">Round</span></div>
     
     <div class="timer-container">
-      <div class="timer-box">⏱️ <span id="timerDisplay">20</span>s</div>
+      <div class="timer-box">⏱️ <span id="timerDisplay">10</span>s</div>
       <div class="progress-bar-bg">
         <div class="progress-bar-fill" id="hostTimerBar"></div>
       </div>
@@ -113,85 +113,100 @@
     
     const questionBank = {
       1: [
-        { round: "Easy Round", points: 1, question: "Which quantity describes rotational motion rather than translational motion?", options: ["Linear velocity", "Angular velocity", "Displacement", "Acceleration"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "What is the primary physical principle behind hydraulic lifts?", options: ["Archimedes' Principle", "Pascal's Principle", "Bernoulli's Principle", "Newton's First Law"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "Which condition poses an electrical hazard caused by connecting too many appliances to one outlet?", options: ["Damaged insulation", "Faulty wiring", "Overloading", "Electrocution"], answer: 2 },
-        { round: "Easy Round", points: 1, question: "What modern lighting technology is known for minimal energy wastage?", options: ["Incandescent bulb", "Fluorescent tube", "LED bulb", "Halogen lamp"], answer: 2 },
-        { round: "Easy Round", points: 1, question: "Which scientist merged chemistry and biology to discover heat treatment prevents microbial growth?", options: ["Antoine Lavoisier", "Louis Pasteur", "Dmitri Mendeleev", "Robert Boyle"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "What active ingredient is commonly found in household liquid bleach?", options: ["Sodium chloride", "Sodium hypochlorite", "Acetic acid", "Calcium carbonate"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "An object floats in a fluid if its overall average density is what compared to the fluid?", options: ["Greater than the fluid", "Equal to the fluid", "Less than the fluid", "Double the fluid"], answer: 2 },
-        { round: "Easy Round", points: 1, question: "Which wave property of sound is primarily utilized in medical ultrasound imaging?", options: ["Refraction", "Reflection", "Diffraction", "Absorption"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "Which Philippine government agency regulates the safety of personal care cosmetics and drugs?", options: ["DTI", "DENR", "FDA", "DOST"], answer: 2 },
-        { round: "Easy Round", points: 1, question: "What simple machine consists of a rigid bar pivoting on a fulcrum?", options: ["Pulley", "Lever", "Wedge", "Screw"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "When a dancer executes a pirouette, pulling their arms closer to the body increases spin speed due to what?", options: ["Linear momentum increase", "Conservation of angular momentum", "Decrease in total torque", "Increase in rotational inertia"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "How does a compound machine differ from a simple machine?", options: ["It generates its own energy", "It combines two or more simple machines", "It operates without friction", "It requires electrical power"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "According to Pascal's Principle, pushing a small piston with force F1 produces a force F2 on a larger piston because what stays constant?", options: ["Fluid volume", "Fluid pressure", "Fluid speed", "Mechanical work"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "Why is dampness near electrical appliances considered extremely dangerous?", options: ["Water reduces voltage", "Water decreases electrical resistance of human skin", "Water increases wire resistance", "Water drains battery charge"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "Soundproof studio walls utilize porous, soft materials primarily to accomplish what?", options: ["Reflect sound waves", "Amplify sound waves", "Absorb sound wave energy", "Diffract sound waves"], answer: 2 },
-        { round: "Moderate Round", points: 3, question: "Louis Pasteur's research disputed spontaneous generation and established which foundational biological theory?", options: ["Cell theory", "Germ theory of disease", "Gene theory", "Atomic theory"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "What chemical component in laundry detergent reduces water surface tension to lift grease?", options: ["Surfactant", "Builder", "Bleaching agent", "Enzyme"], answer: 0 },
-        { round: "Moderate Round", points: 3, question: "Which regulatory agency sets environmental disposal standards for chemical waste in the Philippines?", options: ["DTI", "FDA", "DENR", "DOST"], answer: 2 },
-        { round: "Moderate Round", points: 3, question: "An ergonomic office chair adjustment mechanism primarily applies physics concepts to reduce what?", options: ["Body mass", "Joint stress and improper torque", "Gravitational force", "Body temperature"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "Laser light differs from ordinary light bulb radiation because laser light is what?", options: ["Polychromatic", "Coherent and monochromatic", "Diffuse", "Incoherent"], answer: 1 },
-        { round: "Difficult Round", points: 5, question: "A ship made of heavy steel floats in seawater primarily because its hollow hull configuration alters what physical property?", options: ["Total mass", "Displaced fluid volume to lower overall density", "Gravitational force acting downward", "Surface tension of seawater"], answer: 1 },
-        { round: "Difficult Round", points: 5, question: "If a wheel of radius 0.5 m rotates at 4 rad/s, what is the linear speed of a point on its outer rim?", options: ["1.0 m/s", "2.0 m/s", "4.0 m/s", "8.0 m/s"], answer: 1 },
-        { round: "Difficult Round", points: 5, question: "Improper disposal of synthetic detergent surfactants into river systems causes eutrophication primarily due to high levels of what additive?", options: ["Chlorine", "Phosphates", "Sodium hydroxide", "Fluoride"], answer: 1 },
-        { round: "Difficult Round", points: 5, question: "In a hydraulic jack, an input piston area of 0.02 m² receives a force of 100 N. What output force is created at the 0.2 m² piston?", options: ["10 N", "200 N", "1000 N", "2000 N"], answer: 2 },
-        { round: "Difficult Round", points: 5, question: "In fiber optic communication, light pulses travel inside glass cables through which optical phenomenon?", options: ["Total internal reflection", "Refraction", "Diffraction", "Polarization"], answer: 0 }
+        // Easy Round (10s, 1pt, MC)
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which quantity describes rotational motion rather than translational motion?", options: ["Linear velocity", "Angular velocity", "Displacement", "Acceleration"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which condition poses an electrical hazard caused by connecting too many appliances to one outlet?", options: ["Damaged insulation", "Faulty wiring", "Overloading", "Electrocution"], answer: 2 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which scientist merged chemistry and biology to discover heat treatment prevents microbial growth?", options: ["Antoine Lavoisier", "Louis Pasteur", "Dmitri Mendeleev", "Robert Boyle"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What is the primary physical principle behind hydraulic lifts?", options: ["Archimedes' Principle", "Pascal's Principle", "Bernoulli's Principle", "Newton's First Law"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What active ingredient is commonly found in household liquid bleach?", options: ["Sodium chloride", "Sodium hypochlorite", "Acetic acid", "Calcium carbonate"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What modern lighting technology is known for minimal energy wastage?", options: ["Incandescent bulb", "Fluorescent tube", "LED bulb", "Halogen lamp"], answer: 2 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which simple machine consists of a rigid bar pivoting on a fulcrum?", options: ["Pulley", "Lever", "Wedge", "Screw"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "An object floats in a fluid if its overall average density is what compared to the fluid?", options: ["Greater than the fluid", "Equal to the fluid", "Less than the fluid", "Double the fluid"], answer: 2 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which wave property of sound is primarily utilized in medical ultrasound imaging?", options: ["Refraction", "Reflection", "Diffraction", "Absorption"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which Philippine government agency regulates personal care cosmetics and drugs?", options: ["DTI", "DENR", "FDA", "DOST"], answer: 2 },
+        
+        // Moderate Round (15s, 3pts, MC)
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "When a dancer executes a pirouette, pulling their arms closer to the body increases spin speed due to what?", options: ["Linear momentum increase", "Conservation of angular momentum", "Decrease in total torque", "Increase in rotational inertia"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why is dampness near electrical appliances considered extremely dangerous?", options: ["Water reduces voltage", "Water decreases electrical resistance of human skin", "Water increases wire resistance", "Water drains battery charge"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "What chemical component in laundry detergent reduces water surface tension to lift grease?", options: ["Surfactant", "Builder", "Bleaching agent", "Enzyme"], answer: 0 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "How does a compound machine differ from a simple machine?", options: ["It generates its own energy", "It combines two or more simple machines", "It operates without friction", "It requires electrical power"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Soundproof studio walls utilize porous, soft materials primarily to accomplish what?", options: ["Reflect sound waves", "Amplify sound waves", "Absorb sound wave energy", "Diffract sound waves"], answer: 2 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "According to Pascal's Principle, pushing a small piston produces a larger force on a larger piston because what stays constant?", options: ["Fluid volume", "Fluid pressure", "Fluid speed", "Mechanical work"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Louis Pasteur's research disputed spontaneous generation and established which biological theory?", options: ["Cell theory", "Germ theory of disease", "Gene theory", "Atomic theory"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "An ergonomic office chair adjustment mechanism primarily applies physics concepts to reduce what?", options: ["Body mass", "Joint stress and improper torque", "Gravitational force", "Body temperature"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Which regulatory agency sets environmental disposal standards for chemical waste in the Philippines?", options: ["DTI", "FDA", "DENR", "DOST"], answer: 2 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Laser light differs from ordinary light bulb radiation because laser light is what?", options: ["Polychromatic", "Coherent and monochromatic", "Diffuse", "Incoherent"], answer: 1 },
+        
+        // Difficult Round (30s, 5pts, Identification / Typed Input)
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What optical phenomenon allows light signals to travel through fiber optic cables without escaping?", answer: "total internal reflection" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What additive in synthetic detergents causes algal blooms and eutrophication in river systems?", answer: "phosphate" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "If a wheel of radius 0.5 meters rotates at 4 rad/s, what is the linear speed at its outer rim in m/s?", answer: "2" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "In a hydraulic press, an input piston area of 0.02 m² receives 100 N. What output force in Newtons is created at a 0.2 m² piston?", answer: "1000" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "A ship floats in seawater because its hollow hull configuration increases displaced volume to lower overall what?", answer: "density" }
       ],
       2: [
-        { round: "Easy Round", points: 1, question: "Which motion occurs when an object moves along a straight path without rotation?", options: ["Translational motion", "Rotational motion", "Circular motion", "Vibrational motion"], answer: 0 },
-        { round: "Easy Round", points: 1, question: "Which device converts electrical energy into mechanical movement in household fans?", options: ["Electric generator", "Electric motor", "Transformer", "Capacitor"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "What buoyant force acts on an object submerged in a fluid according to Archimedes' principle?", options: ["Equal to object weight", "Equal to weight of displaced fluid", "Equal to fluid surface area", "Equal to atmospheric pressure"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "Replacing old incandescent lights with LEDs in schools primarily reduces what?", options: ["Voltage", "Electrical energy wastage", "Light intensity", "Current frequency"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "Pasteurization involves heating liquids to specific temperatures to destroy what?", options: ["Chemical toxins", "Harmful pathogens", "Proteins", "Mineral compounds"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "Which household product ingredient is primarily responsible for raising dough in baking?", options: ["Sodium hypochlorite", "Sodium bicarbonate", "Sodium hydroxide", "Sodium chloride"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "What property of light allows optical lenses to focus light rays?", options: ["Reflection", "Refraction", "Absorption", "Diffraction"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "Damaged wire insulation in home appliances creates a significant risk of what?", options: ["Short circuits and electrocution", "Lower electric bills", "Overcharging", "Voltage reduction"], answer: 0 },
-        { round: "Easy Round", points: 1, question: "Which simple machine is used in vehicle steering wheels to multiply input turning force?", options: ["Inclined plane", "Wheel and axle", "Wedge", "Pulley"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "Which government agency handles consumer product safety and fair trade in product labeling?", options: ["DENR", "DTI", "FDA", "DOST"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "How does an ergonomic computer mouse design reduce repetitive strain injuries in the wrist?", options: ["By eliminating friction", "By promoting natural joint alignment and lower muscle torque", "By increasing translational acceleration", "By doubling grip force"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "A hydraulic brake system in modern automobiles amplifies pedal force using which medium?", options: ["Compressed air", "Incompressible hydraulic fluid", "Mechanical gears", "Magnetic fields"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "Why does an electric kettle consume significant energy if scale/lime deposits accumulate inside?", options: ["Scale lowers electrical resistance", "Scale acts as a thermal insulator requiring longer operation", "Scale causes short circuits", "Scale increases voltage requirements"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "In sonar navigation, how do submarine systems calculate distance to the ocean floor?", options: ["By measuring sound refraction angle", "By measuring echo time delay of reflected sound", "By absorbing light signals", "By measuring water density shifts"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "How did Louis Pasteur's work with wine fermentation contribute to industrial microbiology?", options: ["He discovered synthetic dyes", "He identified specific microbes responsible for fermentation and spoilage", "He invented antibiotics", "He created chemical fertilizers"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "What is the primary function of fluoride compounds added to personal care toothpaste?", options: ["Whiten teeth enamel", "Remineralize and prevent tooth decay", "Provide sweet flavor", "Act as a surfactant"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "Why is mixing household ammonia with chlorine bleach extremely dangerous?", options: ["It produces explosive nitroglycerin", "It generates toxic chloramine gas", "It neutralizes all cleaning action uselessly", "It forms highly corrosive acid rain"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "An object submerged in water experiences an upward buoyant force of 50 N. What mass of water was displaced? (g = 9.8 m/s²)", options: ["2.5 kg", "5.1 kg", "10.0 kg", "50.0 kg"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "In gymnastics, executing a tight tuck flip allows faster rotation than an extended layout body position because what is reduced?", options: ["Rotational inertia (moment of inertia)", "Gravitational pull", "Total angular momentum", "Translational displacement"], answer: 0 },
-        { round: "Moderate Round", points: 3, question: "Holograms differ from standard 3D photographs because holographic recording captures what wave characteristic?", options: ["Amplitude only", "Phase information and interference patterns", "Speed variations", "Wavelength reduction"], answer: 1 },
-        { round: "Difficult Round", points: 5, question: "A 2 m lever arm is used to lift a heavy boulder. If 200 N of force is applied perpendicularly at the end, what torque is produced about the fulcrum?", options: ["100 N·m", "200 N·m", "400 N·m", "800 N·m"], answer: 2 },
-        { round: "Difficult Round", points: 5, question: "A solid block weighs 30 N in air and 20 N when completely submerged in water. What is the buoyant force acting on the block?", options: ["10 N", "20 N", "30 N", "50 N"], answer: 0 },
-        { round: "Difficult Round", points: 5, question: "Why does improper disposal of discarded household batteries into general landfills present an environmental health hazard?", options: ["They absorb landfill moisture", "Heavy metals like lead and cadmium leach into groundwater", "They emit excessive carbon dioxide", "They prevent natural composting"], answer: 1 },
-        { round: "Difficult Round", points: 5, question: "If a circuit operating at 220 V has a total resistance of 22 ohms, what current flows through the wiring?", options: ["5 A", "10 A", "22 A", "4840 A"], answer: 1 },
-        { round: "Difficult Round", points: 5, question: "Which optical innovation utilizes monochromatic, highly collimated light waves for precise surgical incisions in medicine?", options: ["Fiber optic endoscope", "Laser scalpel", "X-ray tube", "Ultrasound transducer"], answer: 1 }
+        // Easy Round (10s, 1pt, MC)
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which motion occurs when an object moves along a straight path without rotation?", options: ["Translational motion", "Rotational motion", "Circular motion", "Vibrational motion"], answer: 0 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which device converts electrical energy into mechanical movement in household fans?", options: ["Electric generator", "Electric motor", "Transformer", "Capacitor"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Pasteurization involves heating liquids to specific temperatures to destroy what?", options: ["Chemical toxins", "Harmful pathogens", "Proteins", "Mineral compounds"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What buoyant force acts on an object submerged in a fluid according to Archimedes' principle?", options: ["Equal to object weight", "Equal to weight of displaced fluid", "Equal to fluid surface area", "Equal to atmospheric pressure"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which household product ingredient is primarily responsible for raising dough in baking?", options: ["Sodium hypochlorite", "Sodium bicarbonate", "Sodium hydroxide", "Sodium chloride"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Replacing old incandescent lights with LEDs in schools primarily reduces what?", options: ["Voltage", "Electrical energy wastage", "Light intensity", "Current frequency"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which simple machine is used in vehicle steering wheels to multiply input turning force?", options: ["Inclined plane", "Wheel and axle", "Wedge", "Pulley"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What property of light allows optical lenses to focus light rays?", options: ["Reflection", "Refraction", "Absorption", "Diffraction"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Damaged wire insulation in home appliances creates a significant risk of what?", options: ["Short circuits and electrocution", "Lower electric bills", "Overcharging", "Voltage reduction"], answer: 0 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which government agency handles consumer product safety and fair trade in product labeling?", options: ["DENR", "DTI", "FDA", "DOST"], answer: 1 },
+        
+        // Moderate Round (15s, 3pts, MC)
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "How does an ergonomic computer mouse design reduce repetitive strain injuries in the wrist?", options: ["By eliminating friction", "By promoting natural joint alignment and lower muscle torque", "By increasing translational acceleration", "By doubling grip force"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why is mixing household ammonia with chlorine bleach extremely dangerous?", options: ["It produces explosive nitroglycerin", "It generates toxic chloramine gas", "It neutralizes cleaning action uselessly", "It forms highly corrosive acid rain"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "A hydraulic brake system in modern automobiles amplifies pedal force using which medium?", options: ["Compressed air", "Incompressible hydraulic fluid", "Mechanical gears", "Magnetic fields"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "How did Louis Pasteur's work with wine fermentation contribute to industrial microbiology?", options: ["He discovered synthetic dyes", "He identified microbes responsible for fermentation and spoilage", "He invented antibiotics", "He created chemical fertilizers"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why does an electric kettle consume significant energy if scale deposits accumulate inside?", options: ["Scale lowers electrical resistance", "Scale acts as a thermal insulator requiring longer operation", "Scale causes short circuits", "Scale increases voltage requirements"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "What is the primary function of fluoride compounds added to personal care toothpaste?", options: ["Whiten teeth enamel", "Remineralize and prevent tooth decay", "Provide sweet flavor", "Act as a surfactant"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "In sonar navigation, how do submarine systems calculate distance to the ocean floor?", options: ["By measuring sound refraction angle", "By measuring echo time delay of reflected sound", "By absorbing light signals", "By measuring water density shifts"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "In gymnastics, executing a tight tuck flip allows faster rotation than an layout body position because what is reduced?", options: ["Rotational inertia (moment of inertia)", "Gravitational pull", "Total angular momentum", "Translational displacement"], answer: 0 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "An object submerged in water experiences an upward buoyant force of 50 N. What mass of water was displaced in kg? (g = 9.8 m/s²)", options: ["2.5 kg", "5.1 kg", "10.0 kg", "50.0 kg"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Holograms differ from standard 3D photographs because holographic recording captures what wave characteristic?", options: ["Amplitude only", "Phase information and interference patterns", "Speed variations", "Wavelength reduction"], answer: 1 },
+        
+        // Difficult Round (30s, 5pts, Identification / Typed Input)
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What torque in N·m is produced at the fulcrum by applying 200 N perpendicularly at the end of a 2 m lever arm?", answer: "400" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "A block weighs 30 N in air and 20 N when submerged in water. What is the buoyant force in Newtons acting on it?", answer: "10" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "Improper disposal of batteries into landfills hazards groundwater due to leaching of what class of metals?", answer: "heavy metals" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "If a circuit operating at 220 V has a total resistance of 22 ohms, what current in Amperes flows through the wiring?", answer: "10" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "Which monochromatic, collimated light tool is used for precise surgical incisions in medicine?", answer: "laser" }
       ],
       3: [
-        { round: "Easy Round", points: 1, question: "Which unit measures angular displacement in rotational kinematics?", options: ["Meters", "Radians", "Newton-meters", "Watts"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "What is the primary function of a fixed pulley attached to a flagpole?", options: ["Multiply input force", "Change force direction", "Increase mechanical work", "Reduce load mass"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "An object will sink in water if its mass-to-volume ratio is what?", options: ["Equal to 1.0 g/cm³", "Less than 1.0 g/cm³", "Greater than 1.0 g/cm³", "Zero"], answer: 2 },
-        { round: "Easy Round", points: 1, question: "Unplugging phantom energy chargers when not in use helps homes do what?", options: ["Increase voltage", "Minimize standby energy loss", "Prevent power outages", "Boost wire speed"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "Which sound innovation involves placing acoustic foam panels inside radio broadcasting rooms?", options: ["Sound amplification", "Soundproofing", "Echo generation", "Sonar imaging"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "Louis Pasteur developed early vaccines for which fatal viral disease affecting mammals?", options: ["Tuberculosis", "Rabies", "Malaria", "Cholera"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "What primary chemical compound acts as the abrasive cleaner in many toothpastes?", options: ["Calcium carbonate", "Sodium hypochlorite", "Ammonia", "Ethanol"], answer: 0 },
-        { round: "Easy Round", points: 1, question: "Faulty household electrical wiring with stripped insulation creates a high risk of what?", options: ["Electrocution and structure fires", "Excessive energy savings", "Voltage drops", "Lower current flow"], answer: 0 },
-        { round: "Easy Round", points: 1, question: "What type of light wave technology is widely used in supermarket barcode scanners?", options: ["Infrared LEDs", "Lasers", "Ultraviolet lamps", "Incandescent bulbs"], answer: 1 },
-        { round: "Easy Round", points: 1, question: "Which simple machine consists of an inclined plane wrapped around a cylinder?", options: ["Wedge", "Screw", "Lever", "Wheel and axle"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "In vehicle ergonomics, how do bucket seats reduce driver fatigue during sharp turns?", options: ["By maximizing translational velocity", "By providing lateral support against rotational centripetal forces", "By reducing total vehicle weight", "By absorbing tire friction"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "A compound machine like a bicycle combines which two simple machines in its drive system?", options: ["Lever and wedge", "Wheel/axle and pulley (chain/sprocket)", "Screw and inclined plane", "Hydraulic press and lever"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "Why does a heavy concrete block feel lighter when held under water than in air?", options: ["Gravity is lower underwater", "Water exerts an upward buoyant force equal to displaced water weight", "Water density decreases the block mass", "Water pressure acts only downward"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "How does circuit breaker tripping protect home electrical systems from fire hazards?", options: ["It increases line voltage", "It cuts off current flow when amperage exceeds safe limits", "It redirects current to earth ground", "It cools overheated copper wires"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "Noise-canceling headphones eliminate unwanted ambient sound using which wave interaction?", options: ["Constructive interference", "Destructive interference", "Total internal reflection", "Diffraction grating"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "Louis Pasteur's swan-neck flask experiments proved what critical biological fact?", options: ["Microbes arise spontaneously from non-living air", "Microbes enter from airborne particles, not spontaneous generation", "Heat creates new bacteria", "Viruses require chemical media"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "What environmental health issue arises when excessive phosphate detergents enter aquatic ecosystems?", options: ["Ocean acidification", "Algal blooms leading to oxygen depletion (eutrophication)", "Thermal pollution", "Heavy metal buildup"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "Why are hazardous household chemicals required by DTI/FDA to display GHS warning pictograms?", options: ["To make labels decorative", "To communicate immediate health, flammability, and toxicity risks clearly", "To indicate price levels", "To list active ingredient ratios"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "A gymnast swings on high bars. Converting linear motion into angular rotation depends on applying force at what distance from the bar axis?", options: ["At zero distance", "At a perpendicular distance (radius) to create torque", "Parallel to the bar", "At the exact center of mass"], answer: 1 },
-        { round: "Moderate Round", points: 3, question: "Why do modern energy-efficient air conditioners with inverter technology consume less electricity?", options: ["They run at maximum speed constantly", "They adjust compressor motor speed dynamically instead of cycling fully ON/OFF", "They bypass home circuit breakers", "They utilize hydraulic pumps"], answer: 1 },
-        { round: "Difficult Round", points: 5, question: "If a hydraulic press has an input piston radius of 2 cm and output piston radius of 10 cm, what is its theoretical mechanical force multiplier?", options: ["5 times", "10 times", "25 times", "100 times"], answer: 2 },
-        { round: "Difficult Round", points: 5, question: "A raft has a volume of 2 m³. If freshwater density is 1000 kg/m³, what maximum total mass can the raft support before completely submerging?", options: ["500 kg", "1000 kg", "2000 kg", "4000 kg"], answer: 2 },
-        { round: "Difficult Round", points: 5, question: "Which chemical component in personal care products like liquid soaps acts as a chelating agent to prevent metal ion precipitation in hard water?", options: ["Tetrasodium EDTA", "Sodium lauryl sulfate", "Triclosan", "Glycerin"], answer: 0 },
-        { round: "Difficult Round", points: 5, question: "If a 100 W LED light fixture operates for 10 hours daily, how much electrical energy in kilowatt-hours (kWh) does it consume in a 30-day month?", options: ["3 kWh", "30 kWh", "300 kWh", "3000 kWh"], answer: 1 },
-        { round: "Difficult Round", points: 5, question: "How does an optical fiber system retain light signals over long distances without significant signal loss?", options: ["By amplifying light through continuous refraction", "By reflecting light internally at angles greater than the critical angle", "By converting light to audio frequencies", "By absorbing unwanted light frequencies"], answer: 1 }
+        // Easy Round (10s, 1pt, MC)
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which unit measures angular displacement in rotational kinematics?", options: ["Meters", "Radians", "Newton-meters", "Watts"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Unplugging phantom energy chargers when not in use helps homes do what?", options: ["Increase voltage", "Minimize standby energy loss", "Prevent power outages", "Boost wire speed"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Louis Pasteur developed early vaccines for which fatal viral disease affecting mammals?", options: ["Tuberculosis", "Rabies", "Malaria", "Cholera"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What is the primary function of a fixed pulley attached to a flagpole?", options: ["Multiply input force", "Change force direction", "Increase mechanical work", "Reduce load mass"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What primary chemical compound acts as the abrasive cleaner in many toothpastes?", options: ["Calcium carbonate", "Sodium hypochlorite", "Ammonia", "Ethanol"], answer: 0 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "An object will sink in water if its mass-to-volume ratio is what?", options: ["Equal to 1.0 g/cm³", "Less than 1.0 g/cm³", "Greater than 1.0 g/cm³", "Zero"], answer: 2 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which sound innovation involves placing acoustic foam panels inside radio broadcasting rooms?", options: ["Sound amplification", "Soundproofing", "Echo generation", "Sonar imaging"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Faulty household electrical wiring with stripped insulation creates a high risk of what?", options: ["Electrocution and structure fires", "Excessive energy savings", "Voltage drops", "Lower current flow"], answer: 0 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "What type of light wave technology is widely used in supermarket barcode scanners?", options: ["Infrared LEDs", "Lasers", "Ultraviolet lamps", "Incandescent bulbs"], answer: 1 },
+        { round: "Easy Round", points: 1, timer: 10, type: "mc", question: "Which simple machine consists of an inclined plane wrapped around a cylinder?", options: ["Wedge", "Screw", "Lever", "Wheel and axle"], answer: 1 },
+        
+        // Moderate Round (15s, 3pts, MC)
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "In vehicle ergonomics, how do bucket seats reduce driver fatigue during sharp turns?", options: ["By maximizing translational velocity", "By providing lateral support against rotational centripetal forces", "By reducing total vehicle weight", "By absorbing tire friction"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Louis Pasteur's swan-neck flask experiments proved what critical biological fact?", options: ["Microbes arise spontaneously from air", "Microbes enter from airborne particles, not spontaneous generation", "Heat creates new bacteria", "Viruses require chemical media"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "A compound machine like a bicycle combines which two simple machines in its drive system?", options: ["Lever and wedge", "Wheel/axle and pulley (chain/sprocket)", "Screw and inclined plane", "Hydraulic press and lever"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "What environmental health issue arises when excessive phosphate detergents enter aquatic ecosystems?", options: ["Ocean acidification", "Algal blooms leading to oxygen depletion (eutrophication)", "Thermal pollution", "Heavy metal buildup"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why does a heavy concrete block feel lighter when held under water than in air?", options: ["Gravity is lower underwater", "Water exerts an upward buoyant force equal to displaced water weight", "Water density decreases block mass", "Water pressure acts only downward"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "How does circuit breaker tripping protect home electrical systems from fire hazards?", options: ["It increases line voltage", "It cuts off current flow when amperage exceeds safe limits", "It redirects current to earth ground", "It cools overheated copper wires"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Noise-canceling headphones eliminate unwanted ambient sound using which wave interaction?", options: ["Constructive interference", "Destructive interference", "Total internal reflection", "Diffraction grating"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why are hazardous household chemicals required by DTI/FDA to display GHS warning pictograms?", options: ["To make labels decorative", "To communicate immediate health, flammability, and toxicity risks clearly", "To indicate price levels", "To list active ingredient ratios"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Converting linear motion into angular rotation depends on applying force at what distance from an axis?", options: ["At zero distance", "At a perpendicular distance (radius) to create torque", "Parallel to the bar", "At the exact center of mass"], answer: 1 },
+        { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why do modern energy-efficient air conditioners with inverter technology consume less electricity?", options: ["They run at maximum speed constantly", "They adjust compressor motor speed dynamically instead of cycling fully ON/OFF", "They bypass home circuit breakers", "They utilize hydraulic pumps"], answer: 1 },
+        
+        // Difficult Round (30s, 5pts, Identification / Typed Input)
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "If a hydraulic press has an input piston radius of 2 cm and output piston radius of 10 cm, what is its force multiplier?", answer: "25" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "A raft has a volume of 2 m³. If freshwater density is 1000 kg/m³, what maximum mass in kg can it support before submerging?", answer: "2000" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "Which chelating agent in liquid soaps prevents metal ion precipitation in hard water?", answer: "edta" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "If a 100 W LED fixture operates for 10 hours daily, how much electrical energy in kWh does it consume in a 30-day month?", answer: "30" },
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "By reflecting light internally at angles greater than the critical angle, what cables retain light signals over long distances?", answer: "fiber optic" }
       ]
     };
 
@@ -204,7 +219,7 @@
     let connections = [];
     let inClincherMode = false;
     let timerInterval = null;
-    let timeLeft = 20;
+    let timeLeft = 10;
 
     function switchQuestionSet() {
       const selectedSet = document.getElementById('setSelect').value;
@@ -267,7 +282,8 @@
               conn.send({
                 type: 'question',
                 question: q.question,
-                options: q.options,
+                options: q.options || [],
+                qType: q.type || 'mc',
                 points: q.points,
                 round: q.round,
                 currentTimeLeft: timeLeft
@@ -313,15 +329,15 @@
       document.getElementById('playerList').innerHTML = playerArray.map(p => `<li><span>${p.name}</span> <span>${p.score} pts</span></li>`).join('');
     }
 
-    function startTimer() {
+    function startTimer(duration) {
       clearInterval(timerInterval);
-      timeLeft = 20;
-      updateTimerUI(timeLeft);
+      timeLeft = duration;
+      updateTimerUI(timeLeft, duration);
       document.getElementById('hostTimesUp').style.display = 'none';
 
       timerInterval = setInterval(() => {
         timeLeft--;
-        updateTimerUI(timeLeft);
+        updateTimerUI(timeLeft, duration);
         broadcast({ type: 'tick', time: timeLeft });
 
         if (timeLeft <= 0) {
@@ -332,15 +348,15 @@
       }, 1000);
     }
 
-    function updateTimerUI(seconds) {
+    function updateTimerUI(seconds, totalDuration) {
       document.getElementById('timerDisplay').innerText = seconds;
       const bar = document.getElementById('hostTimerBar');
-      const percentage = (seconds / 20) * 100;
+      const percentage = (seconds / (totalDuration || 10)) * 100;
       bar.style.width = percentage + "%";
 
-      if (seconds <= 5) {
+      if (seconds <= 3) {
         bar.style.backgroundColor = "#dc3545";
-      } else if (seconds <= 10) {
+      } else if (seconds <= 5) {
         bar.style.backgroundColor = "#fd7e14";
       } else {
         bar.style.backgroundColor = "#28a745";
@@ -356,8 +372,6 @@
       clearInterval(timerInterval);
 
       if (stepState === 'lobby' || stepState === 'scoreboard' || stepState === 'roundDivider') {
-        
-        // At end of main questions (index 24) or during clincher questions
         if ((currentQuestion === 24 || inClincherMode) && checkTieForFirst()) {
           inClincherMode = true;
           document.getElementById('tieAlert').style.display = 'block';
@@ -398,8 +412,21 @@
     function calculateScoresForCurrentQuestion() {
       const q = questions[currentQuestion];
       Object.keys(playerAnswers).forEach(uid => {
-        if (playerAnswers[uid] === q.answer && players[uid]) {
-          players[uid].score += q.points;
+        const givenAns = playerAnswers[uid];
+        if (givenAns !== undefined && players[uid]) {
+          if (q.type === 'text') {
+            // Case-insensitive exact string match
+            const cleanedGiven = String(givenAns).trim().toLowerCase();
+            const cleanedCorrect = String(q.answer).trim().toLowerCase();
+            if (cleanedGiven.includes(cleanedCorrect) || cleanedGiven === cleanedCorrect) {
+              players[uid].score += q.points;
+            }
+          } else {
+            // Multiple Choice index match
+            if (givenAns === q.answer) {
+              players[uid].score += q.points;
+            }
+          }
         }
       });
     }
@@ -421,20 +448,28 @@
       document.getElementById('qNumber').innerText = `Question ${currentQuestion + 1} of ${questions.length}`;
       document.getElementById('qText').innerText = q.question;
       
-      document.getElementById('optionsList').innerHTML = q.options.map((opt, i) => 
-        `<div class="option-item"><b>${letters[i]}.</b> ${opt}</div>`
-      ).join('');
+      if (q.type === 'text') {
+        document.getElementById('optionsList').innerHTML = `<div class="option-item"><b>✍️ IDENTIFICATION QUESTION:</b> Type your answer on device.</div>`;
+      } else {
+        document.getElementById('optionsList').innerHTML = q.options.map((opt, i) => 
+          `<div class="option-item"><b>${letters[i]}.</b> ${opt}</div>`
+        ).join('');
+      }
+
+      const duration = q.timer || 10;
 
       broadcast({
         type: 'question',
         question: q.question,
-        options: q.options,
+        options: q.options || [],
+        qType: q.type || 'mc',
         points: q.points,
         round: q.round,
-        currentTimeLeft: 20
+        currentTimeLeft: duration,
+        timerDuration: duration
       });
 
-      startTimer();
+      startTimer(duration);
     }
 
     function sendScoreboardToPlayer(conn) {
@@ -442,13 +477,25 @@
       const currentQ = questions[currentQuestion] || questions[0];
       const uid = conn.playerUid;
       const playerChoice = playerAnswers[uid];
-      const isCorrect = (playerChoice === currentQ.answer);
+      
+      let isCorrect = false;
+      let correctDisplay = "";
+
+      if (currentQ.type === 'text') {
+        const cleanedGiven = String(playerChoice || '').trim().toLowerCase();
+        const cleanedCorrect = String(currentQ.answer).trim().toLowerCase();
+        isCorrect = cleanedGiven.includes(cleanedCorrect) || (cleanedGiven === cleanedCorrect);
+        correctDisplay = currentQ.answer.toUpperCase();
+      } else {
+        isCorrect = (playerChoice === currentQ.answer);
+        correctDisplay = `${['A','B','C','D'][currentQ.answer]}. ${currentQ.options[currentQ.answer]}`;
+      }
 
       conn.send({
         type: 'scoreboard',
         leaderboard: sorted,
         isCorrect: isCorrect,
-        correctAnswerText: `${['A','B','C','D'][currentQ.answer]}. ${currentQ.options[currentQ.answer]}`
+        correctAnswerText: correctDisplay
       });
     }
 
@@ -511,376 +558,6 @@
       broadcast({ type: 'end', leaderboard: sorted });
     }
 
-    window.addEventListener('DOMContentLoaded', initHostSession);
-  </script>
-</body>
-</html>
-
-  <!-- QUESTION SCREEN -->
-  <div class="card" id="questionArea" style="display:none;">
-    <div><span class="badge" id="roundBadge">Round</span></div>
-    
-    <div class="timer-container">
-      <div class="timer-box">⏱️ <span id="timerDisplay">20</span>s</div>
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" id="hostTimerBar"></div>
-      </div>
-    </div>
-
-    <div class="times-up-banner" id="hostTimesUp">🚨 TIME'S UP! 🚨</div>
-    <h3 id="qNumber" style="margin: 5px 0; color: #666;">Question 1</h3>
-    <h1 id="qText" style="margin: 15px 0;">Question goes here...</h1>
-    
-    <div class="options-display" id="optionsList"></div>
-    
-    <button id="qNextBtn" onclick="nextStep()">Show Leaderboard 📊</button>
-  </div>
-
-  <!-- SCOREBOARD SCREEN -->
-  <div class="card" id="scoreboardArea" style="display:none;">
-    <div id="tieAlert" class="alert-banner" style="display:none;">⚠️ TIE DETECTED FOR 1ST PLACE! Clincher Round Initiated.</div>
-    <h1 id="scoreboardTitle">📊 Current Standings</h1>
-    <ul id="roundScoreboard"></ul>
-    
-    <div>
-      <button id="nextBtn" onclick="nextStep()">Next Question ➔</button>
-      <button id="manualClincherBtn" class="btn-secondary" style="display:none;" onclick="startClincherManually()">Force Clincher Round ⚡</button>
-    </div>
-  </div>
-
-  <script>
-    let ROOM_CODE = "";
-    const questions = [
-      { round: "Easy Round", points: 1, question: "What is the capital of the Philippines?", options: ["Cebu", "Manila", "Davao", "Quezon City"], answer: 1 },
-      { round: "Easy Round", points: 1, question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Saturn"], answer: 1 },
-      { round: "Easy Round", points: 1, question: "How many sides does a triangle have?", options: ["3", "4", "5", "6"], answer: 0 },
-
-      { round: "Moderate Round", points: 3, question: "What is the powerhouse of the cell?", options: ["Nucleus", "Ribosome", "Mitochondria", "Cell Wall"], answer: 2 },
-      { round: "Moderate Round", points: 3, question: "Who painted the Mona Lisa?", options: ["Van Gogh", "Picasso", "Da Vinci", "Monet"], answer: 2 },
-      { round: "Moderate Round", points: 3, question: "What is 15 multiplied by 4?", options: ["45", "50", "60", "65"], answer: 2 },
-
-      { round: "Difficult Round", points: 5, question: "Which chemical element has the symbol 'O'?", options: ["Gold", "Oxygen", "Osmium", "Silver"], answer: 1 },
-      { round: "Difficult Round", points: 5, question: "What is the largest ocean on Earth?", options: ["Atlantic", "Indian", "Arctic", "Pacific"], answer: 3 },
-      { round: "Difficult Round", points: 5, question: "What year did World War II end?", options: ["1943", "1944", "1945", "1946"], answer: 2 },
-
-      { round: "Clincher Round", points: 10, question: "[CLINCHER] What is the speed of light in vacuum?", options: ["300,000 km/s", "150,000 km/s", "1,000,000 km/s", "500,000 km/s"], answer: 0 },
-      { round: "Clincher Round", points: 10, question: "[CLINCHER] Which organ produces insulin in the human body?", options: ["Liver", "Pancreas", "Kidney", "Heart"], answer: 1 },
-      { round: "Clincher Round", points: 10, question: "[CLINCHER] What is the longest river in the world?", options: ["Amazon River", "Nile River", "Yangtze River", "Mississippi River"], answer: 1 }
-    ];
-
-    let peer = null;
-    let currentQuestion = -1;
-    let stepState = 'lobby'; 
-    let players = {}; 
-    let playerAnswers = {}; 
-    let connections = [];
-    let inClincherMode = false;
-    let timerInterval = null;
-    let timeLeft = 20;
-
-    function initHostSession() {
-      if (connections.length > 0) {
-        broadcast({ type: 'session_terminated' });
-        connections.forEach(conn => { try { conn.close(); } catch(e){} });
-      }
-
-      if (peer) {
-        try { peer.destroy(); } catch(e){}
-      }
-
-      connections = [];
-      players = {};
-      playerAnswers = {};
-      currentQuestion = -1;
-      stepState = 'lobby';
-      inClincherMode = false;
-      updatePlayerLists();
-
-      ROOM_CODE = "QUIZ" + Math.floor(1000 + Math.random() * 9000);
-      document.getElementById('roomCodeDisplay').innerText = "INITIALIZING...";
-      document.getElementById("qrContainer").innerHTML = `<p><i>Connecting to Server...</i></p>`;
-
-      peer = new Peer(ROOM_CODE);
-
-      peer.on('open', (id) => {
-        document.getElementById('roomCodeDisplay').innerText = id;
-        const joinUrl = `https://cassandranichieagustin-hub.github.io/quiz-bee/player.html?room=${id}`;
-        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
-        document.getElementById("qrContainer").innerHTML = `<img src="${qrApiUrl}" width="200" height="200" alt="Join QR Code" />`;
-      });
-
-      peer.on('connection', (conn) => {
-        connections = connections.filter(c => c.peer !== conn.peer);
-        connections.push(conn);
-
-        conn.on('data', (data) => {
-          if (data.type === 'join') {
-            const formattedName = data.section ? `${data.name} (${data.section})` : data.name;
-            const uid = data.uid || formattedName; 
-
-            conn.playerUid = uid;
-
-            if (!players[uid]) {
-              players[uid] = { name: formattedName, score: 0, currentPeerId: conn.peer };
-            } else {
-              players[uid].name = formattedName;
-              players[uid].currentPeerId = conn.peer;
-            }
-
-            updatePlayerLists();
-
-            if (stepState === 'question' && currentQuestion >= 0) {
-              const q = questions[currentQuestion];
-              conn.send({
-                type: 'question',
-                question: q.question,
-                options: q.options,
-                points: q.points,
-                round: q.round,
-                currentTimeLeft: timeLeft
-              });
-            } else if (stepState === 'scoreboard') {
-              sendScoreboardToPlayer(conn);
-            }
-          } else if (data.type === 'answer') {
-            if (conn.playerUid) {
-              playerAnswers[conn.playerUid] = data.option;
-            }
-          }
-        });
-
-        conn.on('close', () => {
-          connections = connections.filter(c => c !== conn);
-          updatePlayerLists();
-        });
-
-        conn.on('error', () => {
-          connections = connections.filter(c => c !== conn);
-        });
-      });
-    }
-
-    function resetSession() {
-      if (confirm("Are you sure you want to start a NEW session? All connected devices will be disconnected.")) {
-        initHostSession();
-      }
-    }
-
-    function broadcast(data) {
-      connections.forEach(conn => {
-        if (conn && conn.open) {
-          try { conn.send(data); } catch (e) {}
-        }
-      });
-    }
-
-    function updatePlayerLists() {
-      const playerArray = Object.values(players);
-      document.getElementById('playerCount').innerText = playerArray.length;
-      document.getElementById('playerList').innerHTML = playerArray.map(p => `<li><span>${p.name}</span> <span>${p.score} pts</span></li>`).join('');
-    }
-
-    function startTimer() {
-      clearInterval(timerInterval);
-      timeLeft = 20;
-      updateTimerUI(timeLeft);
-      document.getElementById('hostTimesUp').style.display = 'none';
-
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        updateTimerUI(timeLeft);
-        broadcast({ type: 'tick', time: timeLeft });
-
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          document.getElementById('hostTimesUp').style.display = 'block';
-          broadcast({ type: 'timeOut' });
-        }
-      }, 1000);
-    }
-
-    function updateTimerUI(seconds) {
-      document.getElementById('timerDisplay').innerText = seconds;
-      const bar = document.getElementById('hostTimerBar');
-      const percentage = (seconds / 20) * 100;
-      bar.style.width = percentage + "%";
-
-      if (seconds <= 5) {
-        bar.style.backgroundColor = "#dc3545";
-      } else if (seconds <= 10) {
-        bar.style.backgroundColor = "#fd7e14";
-      } else {
-        bar.style.backgroundColor = "#28a745";
-      }
-    }
-
-    function checkTieForFirst() {
-      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
-      return sorted.length >= 2 && sorted[0].score > 0 && sorted[0].score === sorted[1].score;
-    }
-
-    function nextStep() {
-      clearInterval(timerInterval);
-
-      if (stepState === 'lobby' || stepState === 'scoreboard' || stepState === 'roundDivider') {
-        
-        // At question 8 (end of main round) OR during clincher questions
-        if ((currentQuestion === 8 || inClincherMode) && checkTieForFirst()) {
-          inClincherMode = true;
-          document.getElementById('tieAlert').style.display = 'block';
-
-          // If still tied, move to next available clincher question
-          if (currentQuestion < questions.length - 1) {
-            currentQuestion = Math.max(9, currentQuestion + 1);
-            stepState = 'question';
-            showQuestion();
-            return;
-          }
-        }
-
-        // Advance to next question if available
-        if (currentQuestion < questions.length - 1 && !inClincherMode) {
-          currentQuestion++;
-          stepState = 'question';
-          showQuestion();
-        } else if (inClincherMode && currentQuestion < questions.length - 1) {
-          currentQuestion++;
-          stepState = 'question';
-          showQuestion();
-        } else {
-          showFinalWinner();
-        }
-
-      } else if (stepState === 'question') {
-        calculateScoresForCurrentQuestion();
-
-        if (currentQuestion === 2 || currentQuestion === 5 || currentQuestion === 8) {
-          stepState = 'roundDivider';
-          showRoundSummary();
-        } else {
-          stepState = 'scoreboard';
-          showScoreboard(false);
-        }
-      }
-    }
-
-    function calculateScoresForCurrentQuestion() {
-      const q = questions[currentQuestion];
-      Object.keys(playerAnswers).forEach(uid => {
-        if (playerAnswers[uid] === q.answer && players[uid]) {
-          players[uid].score += q.points;
-        }
-      });
-    }
-
-    function showQuestion() {
-      playerAnswers = {}; 
-      document.getElementById('lobby').style.display = 'none';
-      document.getElementById('scoreboardArea').style.display = 'none';
-      document.getElementById('questionArea').style.display = 'block';
-      document.getElementById('hostTimesUp').style.display = 'none';
-
-      const q = questions[currentQuestion];
-      const letters = ['A', 'B', 'C', 'D'];
-
-      const badge = document.getElementById('roundBadge');
-      badge.innerText = `${q.round} (${q.points} PT${q.points > 1 ? 'S' : ''})`;
-      badge.className = `badge ${q.round.split(' ')[0].toLowerCase()}`;
-
-      document.getElementById('qNumber').innerText = `Question ${currentQuestion + 1} of ${questions.length}`;
-      document.getElementById('qText').innerText = q.question;
-      
-      document.getElementById('optionsList').innerHTML = q.options.map((opt, i) => 
-        `<div class="option-item"><b>${letters[i]}.</b> ${opt}</div>`
-      ).join('');
-
-      broadcast({
-        type: 'question',
-        question: q.question,
-        options: q.options,
-        points: q.points,
-        round: q.round,
-        currentTimeLeft: 20
-      });
-
-      startTimer();
-    }
-
-    function sendScoreboardToPlayer(conn) {
-      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
-      const currentQ = questions[currentQuestion] || questions[0];
-      const uid = conn.playerUid;
-      const playerChoice = playerAnswers[uid];
-      const isCorrect = (playerChoice === currentQ.answer);
-
-      conn.send({
-        type: 'scoreboard',
-        leaderboard: sorted,
-        isCorrect: isCorrect,
-        correctAnswerText: `${['A','B','C','D'][currentQ.answer]}. ${currentQ.options[currentQ.answer]}`
-      });
-    }
-
-    function showScoreboard(isRoundEnd) {
-      document.getElementById('questionArea').style.display = 'none';
-      document.getElementById('scoreboardArea').style.display = 'block';
-
-      document.getElementById('scoreboardTitle').innerText = isRoundEnd ? "🎉 Round Tallyboard" : "📊 Current Standings";
-
-      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
-
-      document.getElementById('roundScoreboard').innerHTML = sorted.map((p, index) => {
-        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-        return `<li><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
-      }).join('');
-
-      document.getElementById('manualClincherBtn').style.display = (currentQuestion >= 8) ? 'inline-block' : 'none';
-      document.getElementById('nextBtn').innerText = isRoundEnd ? "Start Next Round ➔" : "Next Question ➔";
-
-      connections.forEach(conn => {
-        if (conn && conn.open) sendScoreboardToPlayer(conn);
-      });
-    }
-
-    function showRoundSummary() {
-      showScoreboard(true);
-      const currentRoundName = questions[currentQuestion].round;
-      document.getElementById('scoreboardTitle').innerText = `🏁 END OF ${currentRoundName.toUpperCase()} TALLYBOARD`;
-    }
-
-    function startClincherManually() {
-      inClincherMode = true;
-      currentQuestion = 8;
-      document.getElementById('tieAlert').innerText = "⚡ MANUAL CLINCHER ROUND ACTIVATED!";
-      document.getElementById('tieAlert').style.display = 'block';
-      nextStep();
-    }
-
-    function showFinalWinner() {
-      const sorted = Object.values(players).sort((a, b) => b.score - a.score);
-      
-      let winnerTitle = "";
-      if (checkTieForFirst()) {
-        const tiedWinners = sorted.filter(p => p.score === sorted[0].score).map(p => p.name).join(" & ");
-        winnerTitle = `👑 CO-CHAMPIONS: ${tiedWinners}`;
-      } else {
-        const winner = sorted[0] ? sorted[0].name : 'No one';
-        winnerTitle = `👑 ${winner}`;
-      }
-
-      document.getElementById('scoreboardArea').style.display = 'none';
-      document.getElementById('questionArea').style.display = 'block';
-      document.getElementById('questionArea').innerHTML = `
-        <h1>🏆 GRAND CHAMPION 🏆</h1>
-        <h2 style="color: #007bff; font-size: 30px;">${winnerTitle}</h2>
-        <h3>Final Quiz Bee Tallyboard:</h3>
-        <ul>${sorted.map((p, i) => `<li><span>${i+1}. ${p.name}</span> <span>${p.score} pts</span></li>`).join('')}</ul>
-      `;
-      
-      broadcast({ type: 'end', leaderboard: sorted });
-    }
-
-    // Initialize session on load
     window.addEventListener('DOMContentLoaded', initHostSession);
   </script>
 </body>
