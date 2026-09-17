@@ -436,15 +436,17 @@
       updateTimerUI(timeLeft, duration);
       document.getElementById('hostTimesUp').style.display = 'none';
 
+      const activeQIndex = currentQuestion;
+
       timerInterval = setInterval(() => {
         timeLeft--;
         updateTimerUI(timeLeft, duration);
-        broadcast({ type: 'tick', time: timeLeft });
+        broadcast({ type: 'tick', time: timeLeft, qIndex: activeQIndex });
 
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
           document.getElementById('hostTimesUp').style.display = 'block';
-          broadcast({ type: 'timeOut' });
+          broadcast({ type: 'timeOut', qIndex: activeQIndex });
         }
       }, 1000);
     }
@@ -629,7 +631,8 @@
         type: 'scoreboard',
         leaderboard: sorted,
         isCorrect: isCorrect,
-        correctAnswerText: correctDisplay
+        correctAnswerText: correctDisplay,
+        qIndex: currentQuestion
       });
     }
 
