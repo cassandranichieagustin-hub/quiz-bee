@@ -1,9 +1,3 @@
-Here is the complete, fully updated host.html file.
-Key Features Included:
- * Simplified Difficult Round: Heavy numerical calculations have been replaced with conceptual identification questions (e.g., matching physical laws, simple machines, wave phenomena, and chemical hazards).
- * 30-Second Identification Mode: Players get a text box during the Difficult Round, and answers are validated automatically on the host side using case-insensitive string matching.
- * Exact Timers: Easy Round (10s), Moderate Round (15s), and Difficult Round (30s).
- * Cleaned Set Options: Dropdown is labeled strictly as Set 1, Set 2, and Set 3 with mixed topics across Term 1 Grade 11 General Science competencies.
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +5,7 @@ Key Features Included:
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quiz Bee Host</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 20px; }
     .card { background: white; max-width: 650px; margin: auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -143,12 +138,19 @@ Key Features Included:
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Which regulatory agency sets environmental disposal standards for chemical waste in the Philippines?", options: ["DTI", "FDA", "DENR", "DOST"], answer: 2 },
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Laser light differs from ordinary light bulb radiation because laser light is what?", options: ["Polychromatic", "Coherent and monochromatic", "Diffuse", "Incoherent"], answer: 1 },
         
-        // Difficult Round (30s, 5pts, Concept Identification)
+        // Difficult Round (30s, 5pts, Identification)
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What optical phenomenon allows light signals to travel inside fiber optic cables without escaping?", answer: "total internal reflection" },
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What detergent chemical additive causes algal blooms and oxygen depletion in rivers?", answer: "phosphate" },
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What rotational force causes an object to turn or rotate around a pivot or fulcrum?", answer: "torque" },
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What upward force is exerted by a fluid on an object placed in it according to Archimedes' principle?", answer: "buoyant force" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What hollow hull design allows massive metal ships to float by increasing displaced water volume?", answer: "density" }
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What hollow hull design allows massive metal ships to float by increasing displaced water volume?", answer: "density" },
+
+        // Clincher Round (Random Difficulty / Types)
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "Which simple machine wrapped around a cylinder converts rotational motion to linear force?", options: ["Wedge", "Screw", "Lever", "Pulley"], answer: 1 },
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What heating process eliminates pathogens in dairy products without boiling the liquid?", answer: "pasteurization" },
+        { round: "Clincher Round", points: 1, timer: 10, type: "mc", question: "What circuit protection mechanism melts to interrupt excessive current flow?", options: ["Transformer", "Fuse", "Capacitor", "Resistor"], answer: 1 },
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What primary surfactant compound ingredient in soap molecules lifts nonpolar oil?", answer: "fatty acid" },
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "Which wave interaction in noise-canceling headphones neutralizes incoming sound waves?", options: ["Constructive interference", "Destructive interference", "Refraction", "Diffraction"], answer: 1 }
       ],
       2: [
         // Easy Round (10s, 1pt, MC)
@@ -175,12 +177,19 @@ Key Features Included:
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "An object submerged in water experiences an upward buoyant force of 50 N. What mass of water was displaced in kg? (g = 9.8 m/s²)", options: ["2.5 kg", "5.1 kg", "10.0 kg", "50.0 kg"], answer: 1 },
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Holograms differ from standard 3D photographs because holographic recording captures what wave characteristic?", options: ["Amplitude only", "Phase information and interference patterns", "Speed variations", "Wavelength reduction"], answer: 1 },
         
-        // Difficult Round (30s, 5pts, Concept Identification)
+        // Difficult Round (30s, 5pts, Identification)
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What simple machine component acts as a fixed pivot point about which a lever rotates?", answer: "fulcrum" },
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What class of hazardous metals like lead and cadmium leach into groundwater from improper battery disposal?", answer: "heavy metals" },
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What safety device automatically breaks an electric circuit when current amperage exceeds safe limits?", answer: "circuit breaker" },
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "Which medical innovation uses focused, coherent light waves for precise tissue incisions?", answer: "laser" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What fluid property describes a liquid's resistance to flow and internal friction?", answer: "viscosity" }
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What fluid property describes a liquid's resistance to flow and internal friction?", answer: "viscosity" },
+
+        // Clincher Round (Random Difficulty / Types)
+        { round: "Clincher Round", points: 1, timer: 10, type: "mc", question: "Which unit measures electric current flow through home wiring?", options: ["Volts", "Amperes", "Ohms", "Watts"], answer: 1 },
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What fundamental property of matter resists changes in its state of linear motion?", answer: "inertia" },
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "Which regulatory body certifies drug efficacy and food hygiene safety in the Philippines?", options: ["DENR", "FDA", "DTI", "DOST"], answer: 1 },
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What light wave frequency band is used by remote controls and thermal sensors?", answer: "infrared" },
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "Which law explains how pressure changes applied to an enclosed fluid transmit equally in all directions?", options: ["Archimedes' Principle", "Pascal's Principle", "Boyle's Law", "Hooke's Law"], answer: 1 }
       ],
       3: [
         // Easy Round (10s, 1pt, MC)
@@ -207,12 +216,19 @@ Key Features Included:
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Converting linear motion into angular rotation depends on applying force at what distance from an axis?", options: ["At zero distance", "At a perpendicular distance (radius) to create torque", "Parallel to the bar", "At the exact center of mass"], answer: 1 },
         { round: "Moderate Round", points: 3, timer: 15, type: "mc", question: "Why do modern energy-efficient air conditioners with inverter technology consume less electricity?", options: ["They run at maximum speed constantly", "They adjust compressor motor speed dynamically instead of cycling fully ON/OFF", "They bypass home circuit breakers", "They utilize hydraulic pumps"], answer: 1 },
         
-        // Difficult Round (30s, 5pts, Concept Identification)
+        // Difficult Round (30s, 5pts, Identification)
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What additive in personal care soaps acts as a chelating agent to soften hard water?", answer: "edta" },
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What wave interaction causes noise-canceling headphones to reduce background sound?", answer: "destructive interference" },
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What physical property of a body resists changes in its rotational state of motion?", answer: "rotational inertia" },
         { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What heating process eliminates disease-causing pathogens in milk and fruit juices?", answer: "pasteurization" },
-        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What simple machine consists of a wheel with a groove holding a rope or cable?", answer: "pulley" }
+        { round: "Difficult Round", points: 5, timer: 30, type: "text", question: "What simple machine consists of a wheel with a groove holding a rope or cable?", answer: "pulley" },
+
+        // Clincher Round (Random Difficulty / Types)
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What standard warning pictograms on cleaning products communicate toxicity and flammability?", answer: "ghs" },
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "An electric fan blade moving around a center spindle represents which motion?", options: ["Translational motion", "Rotational motion", "Linear motion", "Vibrational motion"], answer: 1 },
+        { round: "Clincher Round", points: 1, timer: 10, type: "mc", question: "What chemical element active compound in liquid bleach disinfects surfaces?", options: ["Chlorine", "Fluoride", "Iodine", "Ammonia"], answer: 0 },
+        { round: "Clincher Round", points: 5, timer: 30, type: "text", question: "What optical wave property causes light bending when entering water from air?", answer: "refraction" },
+        { round: "Clincher Round", points: 3, timer: 15, type: "mc", question: "What happens when two simple machines operate together in a single system?", options: ["Forms a compound machine", "Generates free energy", "Eliminates friction", "Reduces mechanical power"], answer: 0 }
       ]
     };
 
@@ -292,6 +308,8 @@ Key Features Included:
                 qType: q.type || 'mc',
                 points: q.points,
                 round: q.round,
+                qIndex: currentQuestion + 1,
+                qTotal: questions.length,
                 currentTimeLeft: timeLeft
               });
             } else if (stepState === 'scoreboard') {
@@ -469,6 +487,8 @@ Key Features Included:
         qType: q.type || 'mc',
         points: q.points,
         round: q.round,
+        qIndex: currentQuestion + 1,
+        qTotal: questions.length,
         currentTimeLeft: duration,
         timerDuration: duration
       });
@@ -538,6 +558,16 @@ Key Features Included:
       nextStep();
     }
 
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
     function showFinalWinner() {
       const sorted = Object.values(players).sort((a, b) => b.score - a.score);
       
@@ -549,6 +579,8 @@ Key Features Included:
         const winner = sorted[0] ? sorted[0].name : 'No one';
         winnerTitle = `👑 ${winner}`;
       }
+
+      triggerConfetti();
 
       document.getElementById('scoreboardArea').style.display = 'none';
       document.getElementById('questionArea').style.display = 'block';
@@ -566,4 +598,3 @@ Key Features Included:
   </script>
 </body>
 </html>
-
