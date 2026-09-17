@@ -55,9 +55,9 @@
     
     <label for="setSelect" style="font-weight: bold; font-size: 18px;">Select Question Set:</label><br>
     <select id="setSelect" class="set-select" onchange="switchQuestionSet()">
-      <option value="1">Set 1: Mixed Science Topics</option>
-      <option value="2">Set 2: Applied Physics & Household Chem</option>
-      <option value="3">Set 3: Integrated Term 1 Science</option>
+      <option value="1">Set 1</option>
+      <option value="2">Set 2</option>
+      <option value="3">Set 3</option>
     </select>
 
     <p>Scan the QR Code using the provided device to join:</p>
@@ -415,14 +415,12 @@
         const givenAns = playerAnswers[uid];
         if (givenAns !== undefined && players[uid]) {
           if (q.type === 'text') {
-            // Case-insensitive exact string match
             const cleanedGiven = String(givenAns).trim().toLowerCase();
             const cleanedCorrect = String(q.answer).trim().toLowerCase();
             if (cleanedGiven.includes(cleanedCorrect) || cleanedGiven === cleanedCorrect) {
               players[uid].score += q.points;
             }
           } else {
-            // Multiple Choice index match
             if (givenAns === q.answer) {
               players[uid].score += q.points;
             }
