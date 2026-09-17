@@ -16,10 +16,10 @@
     .btn { 
       background: #61dafb; color: #282c34; border: none; padding: 16px; width: 100%; margin: 8px 0; 
       font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: left; 
-      transition: all 0.2s ease; pointer-events: auto; user-select: none; -webkit-tap-highlight-color: transparent;
+      transition: all 0.2s ease; user-select: none; -webkit-user-select: none; touch-action: manipulation;
     }
     .btn.selected { background: #007bff !important; color: white !important; transform: scale(1.02); box-shadow: 0 0 10px rgba(0,123,255,0.5); }
-    .btn:disabled { background: #555 !important; color: #aaa !important; cursor: not-allowed !important; pointer-events: none !important; opacity: 0.6; }
+    .btn:disabled { background: #555 !important; color: #aaa !important; cursor: not-allowed !important; opacity: 0.6; }
 
     .info-bar { background: #20232a; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; color: #61dafb; }
     .clincher-bar { background: #6f42c1; color: white; }
@@ -35,34 +35,14 @@
     .result-wrong-bg { background: #dc3545; color: white; }
 
     .result-option {
-      background: #20232a;
-      color: #fff;
-      padding: 12px 15px;
-      margin: 8px 0;
-      border-radius: 8px;
-      text-align: left;
-      font-size: 16px;
-      font-weight: bold;
-      border: 2px solid transparent;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      background: #20232a; color: #fff; padding: 12px 15px; margin: 8px 0; border-radius: 8px; text-align: left; font-size: 16px; font-weight: bold; border: 2px solid transparent; display: flex; justify-content: space-between; align-items: center;
     }
-    .result-option.opt-correct {
-      background: #1e4620 !important;
-      border-color: #28a745 !important;
-      color: #72e077 !important;
-    }
-    .result-option.opt-wrong {
-      background: #4a191b !important;
-      border-color: #dc3545 !important;
-      color: #ff7b88 !important;
-    }
+    .result-option.opt-correct { background: #1e4620 !important; border-color: #28a745 !important; color: #72e077 !important; }
+    .result-option.opt-wrong { background: #4a191b !important; border-color: #dc3545 !important; color: #ff7b88 !important; }
 
     #qText { font-size: 20px; margin: 15px 0; color: #fff; line-height: 1.4; }
-    
-    .text-input-field { background: #fff; color: #333; font-size: 18px; font-weight: bold; padding: 14px; border-radius: 8px; width: 90%; border: none; margin-bottom: 10px; pointer-events: auto; }
-    .text-input-field:disabled { background: #555 !important; opacity: 0.6; pointer-events: none !important; }
+    .text-input-field { background: #fff; color: #333; font-size: 18px; font-weight: bold; padding: 14px; border-radius: 8px; width: 90%; border: none; margin-bottom: 10px; }
+    .text-input-field:disabled { background: #555 !important; opacity: 0.6; }
 
     .times-up-banner {
       display: none; font-size: 26px; font-weight: 900; color: #ff4d4d; letter-spacing: 2px; margin: 10px 0;
@@ -483,7 +463,7 @@
       currentMaxTimer = data.timerDuration || 10;
       const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
       
-      // Strict question state evaluation
+      // Strict evaluation of Question Active Lock
       isTimeUp = (data.isLocked === true || startSeconds <= 0);
 
       const timesUpBanner = document.getElementById('playerTimesUp');
@@ -520,14 +500,6 @@
         textInput.id = 'typedAnswerBox';
         textInput.disabled = isTimeUp;
         
-        if (isTimeUp) {
-          textInput.setAttribute('disabled', 'true');
-          textInput.style.pointerEvents = 'none';
-        } else {
-          textInput.removeAttribute('disabled');
-          textInput.style.pointerEvents = 'auto';
-        }
-
         textInput.oninput = () => {
           if (isTimeUp) return;
           mySelectedAnswer = textInput.value;
@@ -546,23 +518,11 @@
           btn.innerText = `${letters[idx]}. ${opt}`;
           
           btn.disabled = isTimeUp;
-          if (isTimeUp) {
-            btn.setAttribute('disabled', 'true');
-            btn.style.pointerEvents = 'none';
-          } else {
-            btn.removeAttribute('disabled');
-            btn.style.pointerEvents = 'auto';
-          }
           
-          btn.onclick = (e) => {
-            e.preventDefault();
+          // Pure Pointer Event Handler for Mobile & Desktop Compatibility
+          btn.addEventListener('pointerdown', (e) => {
             selectOption(idx);
-          };
-
-          btn.ontouchstart = (e) => {
-            e.preventDefault();
-            selectOption(idx);
-          };
+          });
 
           container.appendChild(btn);
         });
@@ -576,16 +536,13 @@
 
       document.querySelectorAll('#optionsContainer .btn').forEach(b => {
         b.disabled = true;
-        b.setAttribute('disabled', 'true');
-        b.style.pointerEvents = 'none';
       });
       const textInput = document.getElementById('typedAnswerBox');
       if (textInput) {
         textInput.disabled = true;
-        textInput.setAttribute('disabled', 'true');
-        textInput.style.pointerEvents = 'none';
       }
     }
   </script>
 </body>
 </html>
+
