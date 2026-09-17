@@ -53,15 +53,6 @@
     .place-2nd { background: linear-gradient(135deg, #e0e0e0, #f5f5f5); color: #333; padding: 16px; border-radius: 10px; font-size: 20px; font-weight: 900; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(192, 192, 192, 0.5); }
     .place-3rd { background: linear-gradient(135deg, #e5a65d, #c5793e); color: white; padding: 16px; border-radius: 10px; font-size: 20px; font-weight: 900; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(205, 127, 50, 0.5); }
     .place-other { background: #20232a; color: #61dafb; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
-
-    .transition-overlay {
-      display: none;
-      font-size: 24px;
-      font-weight: bold;
-      color: #61dafb;
-      padding: 30px;
-      animation: pulsePlayer 1s infinite alternate;
-    }
   </style>
 </head>
 <body>
@@ -84,11 +75,6 @@
   <div class="card" id="waitingScreen" style="display:none;">
     <h2 id="waitingStatus">Connected! 🚀</h2>
     <p>Waiting for host to start...</p>
-  </div>
-
-  <!-- TRANSITION GAP SCREEN (5-Sec Buffer) -->
-  <div class="card" id="transitionScreen" style="display:none;">
-    <div class="transition-overlay">⏳ Next Question Loading...<br><span id="gapTimer" style="font-size: 40px; color: #ff6b6b;">5</span>s</div>
   </div>
 
   <!-- QUESTION SCREEN -->
@@ -141,7 +127,6 @@
     let isTerminated = false;
     let currentMaxTimer = 10;
     let currentQuestionIndex = -1;
-    let gapInterval = null;
 
     function getOrCreateUid() {
       let uid = localStorage.getItem('qb_uid');
@@ -160,7 +145,6 @@
       if (conn) { try { conn.close(); } catch(e){} }
       if (peer) { try { peer.destroy(); } catch(e){} }
 
-      document.getElementById('transitionScreen').style.display = 'none';
       document.getElementById('questionScreen').style.display = 'none';
       document.getElementById('scoreScreen').style.display = 'none';
       document.getElementById('endScreen').style.display = 'none';
@@ -248,7 +232,11 @@
           }
 
           if (data.type === 'question') {
-            triggerTransitionGap(data);
+            document.getElementById('waitingScreen').style.display = 'none';
+            document.getElementById('scoreScreen').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'none';
+            document.getElementById('questionScreen').style.display = 'block';
+            renderQuestion(data);
           } else if (data.type === 'tick') {
             if (data.qIndex === undefined || data.qIndex === currentQuestionIndex) {
               updatePlayerTimerUI(data.time);
@@ -262,7 +250,6 @@
             }
           } else if (data.type === 'scoreboard') {
             isTimeUp = true;
-            document.getElementById('transitionScreen').style.display = 'none';
             document.getElementById('questionScreen').style.display = 'none';
             document.getElementById('endScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'block';
@@ -287,7 +274,6 @@
               return `<li ${isMe}><span>${medal} ${p.name}</span> <span>${p.score} pts</span></li>`;
             }).join('');
           } else if (data.type === 'end') {
-            document.getElementById('transitionScreen').style.display = 'none';
             document.getElementById('questionScreen').style.display = 'none';
             document.getElementById('scoreScreen').style.display = 'none';
             document.getElementById('waitingScreen').style.display = 'none';
@@ -318,31 +304,6 @@
           reconnectTimer = setTimeout(connectToHost, 2000);
         }
       });
-    }
-
-    function triggerTransitionGap(data) {
-      if (gapInterval) clearInterval(gapInterval);
-
-      document.getElementById('waitingScreen').style.display = 'none';
-      document.getElementById('scoreScreen').style.display = 'none';
-      document.getElementById('endScreen').style.display = 'none';
-      document.getElementById('questionScreen').style.display = 'none';
-      document.getElementById('transitionScreen').style.display = 'block';
-
-      let gapTime = 5;
-      document.getElementById('gapTimer').innerText = gapTime;
-
-      gapInterval = setInterval(() => {
-        gapTime--;
-        document.getElementById('gapTimer').innerText = gapTime;
-
-        if (gapTime <= 0) {
-          clearInterval(gapInterval);
-          document.getElementById('transitionScreen').style.display = 'none';
-          document.getElementById('questionScreen').style.display = 'block';
-          renderQuestion(data);
-        }
-      }, 1000);
     }
 
     function triggerConfetti() {
