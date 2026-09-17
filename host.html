@@ -23,7 +23,6 @@
     li { background: #e9ecef; margin: 8px 0; padding: 12px 16px; border-radius: 6px; display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
     .options-display { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
     
-    /* Option styling & correct answer reveal animation */
     .option-item { 
       font-size: 18px; margin: 8px 0; font-weight: bold; color: #333; padding: 10px; border-radius: 6px; 
       transition: all 0.3s ease; border: 2px solid transparent;
@@ -379,7 +378,7 @@
 
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
-          revealHostCorrectAnswer(); // REVEAL CORRECT ANSWER WHEN TIMER EXPIRES
+          revealHostCorrectAnswer();
           broadcast({ type: 'timeOut', qIndex: activeQIndex });
         }
       }, 1000);
@@ -469,6 +468,9 @@
         }
 
       } else if (stepState === 'question') {
+        // Broadcast input lock so all player options immediately freeze
+        broadcast({ type: 'lockInputs', qIndex: currentQuestion });
+
         calculateScoresForCurrentQuestion();
 
         if (currentQuestion === 9 || currentQuestion === 19 || currentQuestion === 24) {
