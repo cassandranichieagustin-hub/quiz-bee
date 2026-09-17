@@ -370,6 +370,9 @@
     });
 
     function showQuestion(data) {
+      // RESET LOCK STATE FOR NEW QUESTION
+      isTimeUp = false;
+
       currentMaxTimer = data.timerDuration || 10;
       const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
       updatePlayerTimerUI(startSeconds);
@@ -394,6 +397,7 @@
         textInput.className = 'text-input-field';
         textInput.placeholder = 'Type your answer...';
         textInput.id = 'typedAnswerBox';
+        textInput.disabled = false;
 
         textInput.oninput = () => {
           if (isTimeUp) return;
@@ -407,6 +411,7 @@
           const btn = document.createElement('button');
           btn.className = 'btn';
           btn.innerText = `${letters[idx]}. ${opt}`;
+          btn.disabled = false;
           
           btn.onclick = () => {
             if (isTimeUp) return;
@@ -425,7 +430,6 @@
         document.getElementById('playerTimesUp').style.display = 'block';
         disableOptions();
       } else {
-        isTimeUp = false;
         document.getElementById('playerTimesUp').style.display = 'none';
       }
     }
