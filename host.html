@@ -33,12 +33,6 @@
     
     .set-select { padding: 10px; font-size: 16px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; border: 2px solid #007bff; }
 
-    .player-answers-box { text-align: left; background: #e7f1ff; border: 2px solid #007bff; padding: 12px; border-radius: 8px; margin-top: 15px; }
-    .player-answers-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-    .player-answers-header h4 { margin: 0; color: #007bff; }
-    .toggle-btn { background: #007bff; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; border: none; font-weight: bold; }
-    .player-answer-tag { display: inline-block; background: #ffffff; padding: 4px 10px; border-radius: 15px; margin: 3px; font-size: 14px; font-weight: bold; border: 1px solid #b8daff; }
-
     .times-up-banner {
       display: none; font-size: 28px; font-weight: 900; color: #ff2a2a; letter-spacing: 3px; margin: 10px 0;
       animation: pulse 0.8s infinite alternate;
@@ -94,16 +88,6 @@
     <h1 id="qText" style="margin: 15px 0;">Question goes here...</h1>
     
     <div class="options-display" id="optionsList"></div>
-    
-    <div class="player-answers-box">
-      <div class="player-answers-header" onclick="toggleAnswerPanel()">
-        <h4>💬 Live Answers Submitted (<span id="submittedCount">0</span>):</h4>
-        <button class="toggle-btn" id="panelToggleBtn">Hide Panel 🔼</button>
-      </div>
-      <div id="liveAnswersContent" style="margin-top: 10px;">
-        <div id="liveAnswersDisplay"><i>Waiting for player answers...</i></div>
-      </div>
-    </div>
     
     <button id="qNextBtn" onclick="nextStep()">Show Leaderboard 📊</button>
   </div>
@@ -258,20 +242,6 @@
     let inClincherMode = false;
     let timerInterval = null;
     let timeLeft = 10;
-    let isPanelOpen = true;
-
-    function toggleAnswerPanel() {
-      const content = document.getElementById('liveAnswersContent');
-      const btn = document.getElementById('panelToggleBtn');
-      isPanelOpen = !isPanelOpen;
-      if (isPanelOpen) {
-        content.style.display = 'block';
-        btn.innerText = 'Hide Panel 🔼';
-      } else {
-        content.style.display = 'none';
-        btn.innerText = 'Show Panel 🔽';
-      }
-    }
 
     function switchQuestionSet() {
       const selectedSet = document.getElementById('setSelect').value;
@@ -298,7 +268,6 @@
       switchQuestionSet();
       updatePlayerLists();
 
-      // Regenerates dynamic, unique ROOM_CODE
       ROOM_CODE = "QUIZ" + Math.floor(1000 + Math.random() * 9000);
       document.getElementById('roomCodeDisplay').innerText = "INITIALIZING...";
       document.getElementById("qrContainer").innerHTML = `<p><i>Connecting to Server...</i></p>`;
@@ -308,7 +277,6 @@
       peer.on('open', (id) => {
         document.getElementById('roomCodeDisplay').innerText = id;
         
-        // Dynamically creates exact scannable QR Code URL for players
         const joinUrl = `https://cassandranichieagustin-hub.github.io/quiz-bee/player.html?room=${id}`;
         const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
         document.getElementById("qrContainer").innerHTML = `<img src="${qrApiUrl}" width="200" height="200" alt="Join QR Code" />`;
@@ -342,7 +310,6 @@
           } else if (data.type === 'answer') {
             if (conn.playerUid) {
               playerAnswers[conn.playerUid] = data.option;
-              updateLiveAnswersUI();
             }
           }
         });
@@ -376,31 +343,6 @@
       const playerArray = Object.values(players);
       document.getElementById('playerCount').innerText = playerArray.length;
       document.getElementById('playerList').innerHTML = playerArray.map(p => `<li><span>${p.name}</span> <span>${p.score} pts</span></li>`).join('');
-    }
-
-    function updateLiveAnswersUI() {
-      const q = questions[currentQuestion];
-      const answeredUids = Object.keys(playerAnswers);
-      document.getElementById('submittedCount').innerText = answeredUids.length;
-
-      if (answeredUids.length === 0) {
-        document.getElementById('liveAnswersDisplay').innerHTML = `<i>Waiting for player answers...</i>`;
-        return;
-      }
-
-      const letters = ['A', 'B', 'C', 'D'];
-      const tags = answeredUids.map(uid => {
-        const name = players[uid] ? players[uid].name : uid;
-        let ansText = playerAnswers[uid];
-
-        if (q.type === 'mc' && typeof ansText === 'number') {
-          ansText = letters[ansText] || ansText;
-        }
-
-        return `<span class="player-answer-tag">${name}: <b>${ansText}</b></span>`;
-      });
-
-      document.getElementById('liveAnswersDisplay').innerHTML = tags.join(' ');
     }
 
     function startTimer(duration) {
@@ -546,7 +488,6 @@
 
     function showQuestion() {
       playerAnswers = {}; 
-      updateLiveAnswersUI();
 
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('scoreboardArea').style.display = 'none';
