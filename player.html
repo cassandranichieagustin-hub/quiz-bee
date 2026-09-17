@@ -369,8 +369,8 @@
       }
     });
 
-    // Explicit state reset on rendering a new question
     function renderQuestion(data) {
+      // 1. Force explicit reset of time-up flags
       isTimeUp = false;
       document.getElementById('playerTimesUp').style.display = 'none';
       currentQuestionIndex = data.qIndex;
@@ -391,8 +391,9 @@
 
       document.getElementById('qText').innerText = data.question;
       
+      // 2. Destroy and recreate input nodes to guarantee fresh listener attachments
       const container = document.getElementById('optionsContainer');
-      container.innerHTML = ''; // Wipe DOM elements from previous turn
+      container.innerHTML = '';
 
       if (data.qType === 'text') {
         const textInput = document.createElement('input');
@@ -451,3 +452,4 @@
   </script>
 </body>
 </html>
+
