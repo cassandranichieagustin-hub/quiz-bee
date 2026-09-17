@@ -260,7 +260,7 @@
     let inClincherMode = false;
     let timerInterval = null;
     let timeLeft = 10;
-    let isQuestionLocked = false; // Server-side Lock Flag
+    let isQuestionLocked = false;
 
     function switchQuestionSet() {
       const selectedSet = document.getElementById('setSelect').value;
@@ -328,8 +328,7 @@
               sendScoreboardToPlayer(conn);
             }
           } else if (data.type === 'answer') {
-            // REJECT SUBMISSIONS IF QUESTION TIMER IS LOCKED
-            if (!isQuestionLocked && conn.playerUid) {
+            if (!isQuestionLocked && conn.playerUid && data.qIndex === currentQuestion) {
               playerAnswers[conn.playerUid] = data.option;
             }
           }
@@ -382,7 +381,7 @@
 
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
-          isQuestionLocked = true; // HARD LOCK SERVER-SIDE
+          isQuestionLocked = true;
           revealHostCorrectAnswer();
           broadcast({ type: 'timeOut', qIndex: activeQIndex });
         }
@@ -526,7 +525,7 @@
         qRoundName: roundMeta.name,
         currentTimeLeft: timeLeft,
         timerDuration: duration,
-        isLocked: isQuestionLocked // Send current lock status on refresh
+        isLocked: isQuestionLocked
       });
     }
 
