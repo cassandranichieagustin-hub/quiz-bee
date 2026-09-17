@@ -264,13 +264,9 @@
             }
           } else if (data.type === 'timeOut' || data.type === 'lockInputs') {
             if (data.qIndex === currentActiveQuestionIndex) {
-              isTimeUp = true;
-              updatePlayerTimerUI(0);
-              document.getElementById('playerTimesUp').style.display = 'block';
               disableOptions();
             }
           } else if (data.type === 'scoreboard') {
-            isTimeUp = true;
             disableOptions();
 
             document.getElementById('questionScreen').style.display = 'none';
@@ -460,27 +456,14 @@
     }
 
     function renderQuestion(data) {
+      isTimeUp = false; // Mandatory Reset
       currentMaxTimer = data.timerDuration || 10;
       
-      const now = Date.now();
-      let remainingSeconds = data.currentTimeLeft !== undefined ? data.currentTimeLeft : currentMaxTimer;
-
-      if (data.timerEndTime && data.timerEndTime > 0) {
-        remainingSeconds = Math.max(0, Math.ceil((data.timerEndTime - now) / 1000));
-      }
-
-      // Hard check: If host locks it or time remaining <= 0
-      isTimeUp = (data.isLocked === true || remainingSeconds <= 0);
-
+      const startSeconds = (data.currentTimeLeft !== undefined) ? data.currentTimeLeft : currentMaxTimer;
       const timesUpBanner = document.getElementById('playerTimesUp');
 
-      if (isTimeUp) {
-        timesUpBanner.style.display = 'block';
-        updatePlayerTimerUI(0);
-      } else {
-        timesUpBanner.style.display = 'none';
-        updatePlayerTimerUI(remainingSeconds);
-      }
+      timesUpBanner.style.display = 'none';
+      updatePlayerTimerUI(startSeconds);
 
       if (data.qRoundIndex && data.qRoundTotal) {
         document.getElementById('playerQCounter').innerText = `${data.qRoundName || 'Question'}: ${data.qRoundIndex} of ${data.qRoundTotal}`;
@@ -502,9 +485,8 @@
         const textInput = document.createElement('input');
         textInput.type = 'text';
         textInput.className = 'text-input-field';
-        textInput.placeholder = isTimeUp ? 'Time is up!' : 'Type your answer...';
+        textInput.placeholder = 'Type your answer...';
         textInput.id = 'typedAnswerBox';
-        textInput.disabled = isTimeUp;
         
         textInput.oninput = () => {
           if (isTimeUp) return;
@@ -523,23 +505,22 @@
           btn.id = `opt_btn_${idx}`;
           btn.innerText = `${letters[idx]}. ${opt}`;
           
-          btn.disabled = isTimeUp;
-          
-          btn.addEventListener('pointerdown', (e) => {
-            selectOption(idx);
-          });
+          btn.onclick = () => selectOption(idx);
 
           container.appendChild(btn);
         });
       }
 
-      if (isTimeUp) {
+      if (data.isLocked === true || startSeconds <= 0) {
         disableOptions();
       }
     }
 
     function disableOptions() {
       isTimeUp = true;
+      document.getElementById('playerTimesUp').style.display = 'block';
+      updatePlayerTimerUI(0);
+
       const container = document.getElementById('optionsContainer');
       if (container) container.style.pointerEvents = 'none';
 
